@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guías de Despacho</title>
+    <title>Visualización de Guías de Despacho</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
             --primary-color: #5c6bc0;
@@ -16,9 +16,9 @@
             --dark-color: #212529;
             --success-color: #4cc9f0;
             --warning-color: #f72585;
+            --error-color: #f44336;
             --border-radius: 8px;
             --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --volver-color: #5c6bc0;
         }
 
         * {
@@ -32,12 +32,17 @@
             background-color: #f5f7fa;
             color: var(--dark-color);
             line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .container {
-            max-width: 95%;
-            margin: 2rem auto;
-            padding: 0 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            flex: 1;
+            width: 100%;
         }
 
         header {
@@ -45,16 +50,27 @@
             color: white;
             padding: 1.5rem;
             border-radius: var(--border-radius);
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             box-shadow: var(--box-shadow);
             background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
             text-align: center;
-            position: relative;
+            width: 100%;
         }
 
         h1 {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.9;
         }
 
         .btn {
@@ -64,10 +80,14 @@
             padding: 0.7rem 1.5rem;
             border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 500;
             transition: all 0.3s ease;
             box-shadow: var(--box-shadow);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn:hover {
@@ -75,55 +95,174 @@
             transform: translateY(-2px);
         }
 
-        .btn-danger {
-            background-color: var(--warning-color);
-        }
-
-        .btn-danger:hover {
-            background-color: #d3165e;
-        }
-
         .btn-success {
             background-color: var(--success-color);
         }
 
-        .btn-success:hover {
-            background-color: #3aa8d8;
+        .btn-warning {
+            background-color: var(--warning-color);
         }
 
-        .btn-volver {
-            background-color: var(--volver-color);
-            position: absolute;
-            left: 1.5rem;
-            top: 50%;
-            transform: translateY(-50%);
+        .btn-error {
+            background-color: var(--error-color);
         }
 
-        .btn-volver:hover {
-            background-color: #5a6268;
+        .btn-info {
+            background-color: #17a2b8;
         }
 
         .btn-sm {
-            padding: 0.3rem 0.7rem;
-            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
         }
 
-        .table-container {
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            display: none;
+            box-shadow: var(--box-shadow);
+        }
+
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .status-message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            display: block;
+        }
+
+        .status-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
             background-color: white;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
-            overflow-x: auto;
-            margin-bottom: 2rem;
+            padding: 15px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .summary-card h3 {
+            font-size: 16px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .summary-card p {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .stats-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 15px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .stats-card h3 {
+            font-size: 16px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .stats-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 3px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .stats-item span:first-child {
+            font-weight: 500;
+        }
+
+        .stats-item span:last-child {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 0 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .actions-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1000px;
+            margin-top: 20px;
+            box-shadow: var(--box-shadow);
+            border-radius: var(--border-radius);
+            overflow: hidden;
         }
 
         th, td {
-            padding: 0.8rem 1rem;
+            padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
         }
@@ -144,236 +283,84 @@
             background-color: #e9ecef;
         }
 
-        .info-text {
-            color: #6c757d;
-            font-style: italic;
-            margin-bottom: 1rem;
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
         }
 
-        .file-input-container {
-            margin-bottom: 1.5rem;
+        .pagination button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--accent-color);
+            color: white;
+            cursor: pointer;
+        }
+
+        .pagination button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
             display: flex;
-            align-items: center;
-            gap: 1rem;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
-        .file-input-label {
-            display: inline-block;
-            padding: 0.7rem 1.5rem;
-            background-color: var(--success-color);
-            color: white;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .file-input-label:hover {
-            background-color: #3aa8d8;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .file-name {
-            font-size: 0.9rem;
-            color: var(--dark-color);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .password-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .password-modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .password-input {
-            width: 100%;
-            padding: 0.8rem;
-            margin: 1rem 0;
+        .search-container input {
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: var(--border-radius);
-        }
-
-        .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-        }
-
-        /* Nuevos estilos para las mejoras */
-        .summary-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .summary-card {
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 1rem;
             flex: 1;
             min-width: 200px;
         }
 
-        .summary-card h3 {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
-        }
-
-        .summary-card p {
-            font-size: 1.2rem;
-            font-weight: 500;
-        }
-
-        /* Nuevos estilos para los filtros */
-        .filter-container {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .filter-group label {
-            font-weight: 500;
-        }
-
-        .filter-group input, .filter-group select {
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-        }
-
-        .destinatarios-container, .transportistas-container {
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .destinatarios-list, .transportistas-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .destinatario-tag, .transportista-tag {
-            background-color: var(--accent-color);
-            color: white;
-            padding: 0.3rem 0.7rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-
-        .scroll-top-btn {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background-color: var(--primary-color);
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: var(--box-shadow);
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 999;
-        }
-
-        .scroll-top-btn.visible {
-            opacity: 1;
-        }
-
-        .btn-export {
-            background-color: #4caf50;
-        }
-
-        .btn-export:hover {
-            background-color: #3e8e41;
+        .search-container button {
+            padding: 10px 20px;
         }
 
         @media (max-width: 768px) {
             .container {
-                max-width: 100%;
-                padding: 0 0.5rem;
+                padding: 1rem;
             }
             
-            .file-input-container {
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .actions-container, .nav-buttons, .search-container {
                 flex-direction: column;
-                align-items: flex-start;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
             }
             
             th, td {
-                padding: 0.5rem;
-                font-size: 0.9rem;
+                padding: 8px 10px;
+                font-size: 14px;
             }
-
-            .filter-container {
-                flex-direction: column;
-                align-items: flex-start;
+            
+            .summary-card, .stats-card {
+                min-width: 100%;
             }
+        }
 
-            .filter-group {
-                width: 100%;
-            }
-
-            .filter-group input, .filter-group select {
-                flex: 1;
-                width: 100%;
-            }
-
-            .btn-volver {
-                position: static;
-                transform: none;
-                margin-bottom: 1rem;
-                width: 100%;
-            }
-
-            header {
-                padding: 1rem;
-                flex-direction: column;
-                text-align: center;
-            }
-
+        @media (max-width: 480px) {
             h1 {
-                margin-bottom: 1rem;
+                font-size: 1.5rem;
             }
         }
     </style>
@@ -381,89 +368,77 @@
 <body>
     <div class="container">
         <header>
-            <button class="btn btn-volver" id="volverBtn">
-                <i class="fas fa-arrow-left"></i> Volver
-            </button>
-            <h1>Guías de Despacho</span></h1>
+            <h1>
+                <i class="fas fa-truck"></i>
+                Visualización de Guías de Despacho
+            </h1>
+            <p class="subtitle">Datos almacenados en Supabase</p>
         </header>
 
-        <div class="file-input-container">
-            <label for="excelFile" class="file-input-label">
-                <i class="fas fa-file-excel"></i> Cargar Excel
-            </label>
-            <span id="fileName" class="file-name">No se ha seleccionado archivo</span>
-            <input type="file" id="excelFile" class="file-input" accept=".xlsx, .xls, .csv">
-            <button class="btn btn-danger" id="clearData">
-                <i class="fas fa-trash"></i> Limpiar Todo
+        <div class="nav-buttons">
+            <button class="btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i> Volver 
             </button>
-            <button class="btn btn-export" id="exportExcel">
-                <i class="fas fa-download"></i> Exportar Excel
+            <button class="btn btn-success" id="addNewBtn">
+                <i class="fas fa-plus"></i> Agregar Nueva Guía
+            </button>
+            <button class="btn btn-info" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Actualizar Datos
             </button>
         </div>
 
-        <!-- Filtros por Nro Guía y Estado -->
-        <div class="filter-container">
-            <div class="filter-group">
-                <label for="filtroNumeroGuia">Nro Guía:</label>
-                <input type="text" id="filtroNumeroGuia" placeholder="Buscar por número de guía">
-            </div>
-            
-            <div class="filter-group">
-                <label for="filtroEstado">Estado:</label>
-                <select id="filtroEstado">
-                    <option value="">Todos</option>
-                    <option value="vigente">Vigente</option>
-                    <option value="anulada">Anulada</option>
-                </select>
-            </div>
-            
-            <button class="btn" id="aplicarFiltro">Aplicar Filtro</button>
-            <button class="btn btn-danger" id="limpiarFiltro">Limpiar Filtro</button>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar en todos los campos...">
+            <button class="btn btn-info" id="searchBtn">
+                <i class="fas fa-search"></i> Buscar
+            </button>
+            <button class="btn btn-warning" id="clearSearchBtn">
+                <i class="fas fa-times"></i> Limpiar
+            </button>
         </div>
 
-        <!-- Resumen de datos -->
+        <div id="statusMessage" class="status-message"></div>
+        <div class="loading" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <p>Cargando datos...</p>
+        </div>
+
         <div class="summary-container">
             <div class="summary-card">
                 <h3>Guías Totales</h3>
-                <p id="totalGuias">0</p>
+                <p id="totalRegistros">0</p>
             </div>
             <div class="summary-card">
-                <h3>Guías Vigentes</h3>
-                <p id="guiasVigentes">0</p>
+                <h3>Peso Bruto Total</h3>
+                <p id="totalPesoBruto">0</p>
             </div>
             <div class="summary-card">
-                <h3>Guías Anuladas</h3>
-                <p id="guiasAnuladas">0</p>
-            </div>
-            <div class="summary-card">
-                <h3>Total Sellos</h3>
-                <p id="totalSellos">0</p>
-            </div>
-            <div class="summary-card">
-                <h3>Total Peso Neto</h3>
+                <h3>Peso Neto Total</h3>
                 <p id="totalPesoNeto">0</p>
             </div>
-        </div>
-
-        <!-- Listado de destinatarios -->
-        <div class="destinatarios-container">
-            <h3>Destinatarios</h3>
-            <div class="destinatarios-list" id="destinatariosList">
-                <span class="destinatario-tag">No hay datos</span>
+            <div class="summary-card">
+                <h3>Última Fecha</h3>
+                <p id="ultimaFecha">-</p>
             </div>
         </div>
 
-        <!-- Listado de transportistas -->
-        <div class="transportistas-container">
-            <h3>Transportistas</h3>
-            <div class="transportistas-list" id="transportistasList">
-                <span class="transportista-tag">No hay datos</span>
+        <div class="summary-container">
+            <div class="stats-card">
+                <h3>Transportistas (Top 10)</h3>
+                <div class="stats-list" id="transportistasList">
+                    <div style="text-align: center; padding: 10px;">Cargando...</div>
+                </div>
+            </div>
+            <div class="stats-card">
+                <h3>Destinos (Top 10)</h3>
+                <div class="stats-list" id="destinosList">
+                    <div style="text-align: center; padding: 10px;">Cargando...</div>
+                </div>
             </div>
         </div>
 
-        <!-- Tabla de guías -->
-        <div class="table-container">
-            <table id="sheet2Table">
+        <div class="table-container" style="overflow-x: auto;">
+            <table id="guiasTable">
                 <thead>
                     <tr>
                         <th>Nro Guía</th>
@@ -483,448 +458,422 @@
                         <th>Sellos</th>
                     </tr>
                 </thead>
-                <tbody id="sheet2TableBody">
+                <tbody id="guiasTableBody">
                     <tr>
-                        <td colspan="15" style="text-align: center;">No hay datos disponibles. Cargue un archivo Excel.</td>
+                        <td colspan="15" style="text-align: center;">Cargando datos...</td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <p class="info-text">Detalle de guías de despacho</p>
-    </div>
 
-    <!-- Botón para ir al principio -->
-    <div class="scroll-top-btn" id="scrollTopBtn">
-        <i class="fas fa-arrow-up"></i>
-    </div>
-
-    <!-- Modal para contraseña -->
-    <div class="password-modal" id="passwordModal">
-        <div class="password-modal-content">
-            <h2>Confirmar eliminación</h2>
-            <p>Ingrese la contraseña para eliminar todos los datos:</p>
-            <input type="password" id="passwordInput" class="password-input" placeholder="Contraseña">
-            <div class="modal-buttons">
-                <button class="btn" id="cancelDelete">Cancelar</button>
-                <button class="btn btn-danger" id="confirmDelete">Eliminar</button>
-            </div>
-            <p id="passwordError" style="color: var(--warning-color); margin-top: 1rem; display: none;">Contraseña incorrecta. Intente nuevamente.</p>
+        <div class="pagination">
+            <button id="prevPage" disabled>Anterior</button>
+            <button id="nextPage">Siguiente</button>
         </div>
+        <div class="pagination-info" id="pageInfo">Página 1 de 1</div>
     </div>
 
     <script>
-        // Datos en memoria
-        let guiasData = [];
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://qshotifyajtvommvpyjb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzaG90aWZ5YWp0dm9tbXZweWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3Nzg2MjEsImV4cCI6MjA2ODM1NDYyMX0.OJacqcH9AeZETyhjNpHbwJaRJbNgNHixd2reFXWkCr8';
+        
+        // Variables de estado
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        let totalRecords = 0;
+        let allGuiasData = [];
         let filteredData = [];
+        let currentSearchTerm = '';
+        let transportistasStats = [];
+        let destinosStats = [];
         
         // Elementos del DOM
-        const excelFileInput = document.getElementById('excelFile');
-        const fileNameSpan = document.getElementById('fileName');
-        const clearDataBtn = document.getElementById('clearData');
-        const exportExcelBtn = document.getElementById('exportExcel');
-        const sheet2TableBody = document.getElementById('sheet2TableBody');
-        const fechaCierreSpan = document.getElementById('fechaCierre');
-        const passwordModal = document.getElementById('passwordModal');
-        const passwordInput = document.getElementById('passwordInput');
-        const cancelDeleteBtn = document.getElementById('cancelDelete');
-        const confirmDeleteBtn = document.getElementById('confirmDelete');
-        const passwordError = document.getElementById('passwordError');
-        const filtroNumeroGuia = document.getElementById('filtroNumeroGuia');
-        const filtroEstado = document.getElementById('filtroEstado');
-        const aplicarFiltroBtn = document.getElementById('aplicarFiltro');
-        const limpiarFiltroBtn = document.getElementById('limpiarFiltro');
-        const totalGuiasSpan = document.getElementById('totalGuias');
-        const guiasVigentesSpan = document.getElementById('guiasVigentes');
-        const guiasAnuladasSpan = document.getElementById('guiasAnuladas');
-        const totalSellosSpan = document.getElementById('totalSellos');
+        const guiasTableBody = document.getElementById('guiasTableBody');
+        const statusMessage = document.getElementById('statusMessage');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const totalRegistrosSpan = document.getElementById('totalRegistros');
+        const totalPesoBrutoSpan = document.getElementById('totalPesoBruto');
         const totalPesoNetoSpan = document.getElementById('totalPesoNeto');
-        const destinatariosList = document.getElementById('destinatariosList');
+        const ultimaFechaSpan = document.getElementById('ultimaFecha');
+        const backBtn = document.getElementById('backBtn');
+        const addNewBtn = document.getElementById('addNewBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageInfoSpan = document.getElementById('pageInfo');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
         const transportistasList = document.getElementById('transportistasList');
-        const scrollTopBtn = document.getElementById('scrollTopBtn');
-        const volverBtn = document.getElementById('volverBtn');
-
-        // Contraseña para eliminar datos
-        const DELETE_PASSWORD = "230304";
-
-        // Formatear fecha
+        const destinosList = document.getElementById('destinosList');
+        
+        // Formatear fecha para visualización
         function formatFecha(fecha) {
             if (!fecha) return '-';
             
-            // Si es un objeto Date
-            if (fecha instanceof Date) {
-                return `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth()+1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
-            }
-            
-            // Si es un string ISO (de Excel)
-            if (typeof fecha === 'string' && fecha.includes('T')) {
+            try {
                 const dateObj = new Date(fecha);
-                return formatFecha(dateObj);
+                if (isNaN(dateObj.getTime())) return fecha;
+                
+                return `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
+            } catch (e) {
+                return fecha;
+            }
+        }
+        
+        // Formatear fecha y hora para visualización
+        function formatFechaHora(fecha) {
+            if (!fecha) return '-';
+            
+            try {
+                const dateObj = new Date(fecha);
+                if (isNaN(dateObj.getTime())) return fecha;
+                
+                return `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${dateObj.getFullYear()} ${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+            } catch (e) {
+                return fecha;
+            }
+        }
+        
+        // Mostrar mensaje de estado
+        function showStatus(type, message) {
+            statusMessage.className = 'status-message ' + type;
+            statusMessage.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'exclamation-triangle'}"></i> ${message}`;
+        }
+        
+        // Calcular estadísticas de transportistas y destinos
+        function calculateStats(data) {
+            // Estadísticas de transportistas
+            const transportistasMap = new Map();
+            
+            // Estadísticas de destinos
+            const destinosMap = new Map();
+            
+            data.forEach(guia => {
+                // Contar transportistas
+                if (guia.transportista) {
+                    const count = transportistasMap.get(guia.transportista) || 0;
+                    transportistasMap.set(guia.transportista, count + 1);
+                }
+                
+                // Contar destinos
+                if (guia.destinatario) {
+                    const count = destinosMap.get(guia.destinatario) || 0;
+                    destinosMap.set(guia.destinatario, count + 1);
+                }
+            });
+            
+            // Convertir a array y ordenar
+            transportistasStats = Array.from(transportistasMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            destinosStats = Array.from(destinosMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            // Actualizar las listas en el DOM
+            updateStatsLists();
+        }
+        
+        // Actualizar las listas de estadísticas en el DOM
+        function updateStatsLists() {
+            // Transportistas
+            if (transportistasStats.length > 0) {
+                let transportistasHTML = '';
+                transportistasStats.forEach(([nombre, cantidad]) => {
+                    transportistasHTML += `
+                        <div class="stats-item">
+                            <span>${nombre || 'Desconocido'}</span>
+                            <span>${cantidad}</span>
+                        </div>
+                    `;
+                });
+                transportistasList.innerHTML = transportistasHTML;
+            } else {
+                transportistasList.innerHTML = '<div style="text-align: center; padding: 10px;">No hay datos</div>';
             }
             
-            // Si es un número (serial de Excel)
-            if (typeof fecha === 'number') {
-                // Convertir serial de Excel a fecha
-                const dateObj = new Date((fecha - (25567 + 2)) * 86400 * 1000);
-                return formatFecha(dateObj);
+            // Destinos
+            if (destinosStats.length > 0) {
+                let destinosHTML = '';
+                destinosStats.forEach(([nombre, cantidad]) => {
+                    destinosHTML += `
+                        <div class="stats-item">
+                            <span>${nombre || 'Desconocido'}</span>
+                            <span>${cantidad}</span>
+                        </div>
+                    `;
+                });
+                destinosList.innerHTML = destinosHTML;
+            } else {
+                destinosList.innerHTML = '<div style="text-align: center; padding: 10px;">No hay datos</div>';
             }
-            
-            // Si ya está en formato string pero no es ISO
-            return fecha;
         }
-
-        // Contar sellos (cada número cuenta como 1)
-        function contarSellos(sellosStr) {
-            if (!sellosStr || sellosStr === '-') return 0;
-            
-            // Extraer todos los números del string
-            const numeros = sellosStr.match(/\d+/g);
-            return numeros ? numeros.length : 0;
-        }
-
+        
         // Actualizar resumen de datos
         function updateSummary(data) {
             const total = data.length;
-            const vigentes = data.filter(g => g.estado && g.estado.toLowerCase().includes('vigente')).length;
-            const anuladas = data.filter(g => g.estado && g.estado.toLowerCase().includes('anulada')).length;
             
-            let totalSellos = 0;
+            let totalPesoBruto = 0;
             let totalPesoNeto = 0;
+            let ultimaFecha = null;
             
             data.forEach(guia => {
-                totalSellos += contarSellos(guia.sellos);
+                if (guia.peso_bruto && !isNaN(guia.peso_bruto)) {
+                    totalPesoBruto += Number(guia.peso_bruto);
+                }
                 
-                // Sumar peso neto si es un número
-                if (guia.pesoNeto && !isNaN(guia.pesoNeto)) {
-                    totalPesoNeto += Number(guia.pesoNeto);
+                if (guia.peso_neto && !isNaN(guia.peso_neto)) {
+                    totalPesoNeto += Number(guia.peso_neto);
+                }
+                
+                if (guia.fecha_emision) {
+                    const fecha = new Date(guia.fecha_emision);
+                    if (!ultimaFecha || fecha > ultimaFecha) {
+                        ultimaFecha = fecha;
+                    }
                 }
             });
             
-            totalGuiasSpan.textContent = total;
-            guiasVigentesSpan.textContent = vigentes;
-            guiasAnuladasSpan.textContent = anuladas;
-            totalSellosSpan.textContent = totalSellos;
+            totalRegistrosSpan.textContent = total;
+            totalPesoBrutoSpan.textContent = totalPesoBruto.toFixed(2);
             totalPesoNetoSpan.textContent = totalPesoNeto.toFixed(2);
+            ultimaFechaSpan.textContent = ultimaFecha ? formatFecha(ultimaFecha) : '-';
             
-            // Actualizar destinatarios y transportistas
-            updateDestinatarios(data);
-            updateTransportistas(data);
+            // Calcular estadísticas
+            calculateStats(data);
         }
-
-        // Actualizar listado de destinatarios
-        function updateDestinatarios(data) {
-            const destinatarios = {};
-            
-            data.forEach(guia => {
-                if (guia.destinatario && guia.destinatario !== '-') {
-                    destinatarios[guia.destinatario] = (destinatarios[guia.destinatario] || 0) + 1;
-                }
-            });
-            
-            const destinatariosArray = Object.entries(destinatarios).sort((a, b) => b[1] - a[1]);
-            
-            if (destinatariosArray.length === 0) {
-                destinatariosList.innerHTML = '<span class="destinatario-tag">No hay datos</span>';
-                return;
-            }
-            
-            let html = '';
-            destinatariosArray.forEach(([destinatario, count]) => {
-                html += `<span class="destinatario-tag" title="${count} guía(s)">${destinatario} (${count})</span>`;
-            });
-            
-            destinatariosList.innerHTML = html;
-        }
-
-        // Actualizar listado de transportistas
-        function updateTransportistas(data) {
-            const transportistas = {};
-            
-            data.forEach(guia => {
-                if (guia.transportista && guia.transportista !== '-') {
-                    transportistas[guia.transportista] = (transportistas[guia.transportista] || 0) + 1;
-                }
-            });
-            
-            const transportistasArray = Object.entries(transportistas).sort((a, b) => b[1] - a[1]);
-            
-            if (transportistasArray.length === 0) {
-                transportistasList.innerHTML = '<span class="transportista-tag">No hay datos</span>';
-                return;
-            }
-            
-            let html = '';
-            transportistasArray.forEach(([transportista, count]) => {
-                html += `<span class="transportista-tag" title="${count} guía(s)">${transportista} (${count})</span>`;
-            });
-            
-            transportistasList.innerHTML = html;
-        }
-
-        // Filtrar datos por Nro Guía y Estado
-        function filterData() {
-            const numeroGuiaFilter = filtroNumeroGuia.value.toLowerCase();
-            const estadoFilter = filtroEstado.value.toLowerCase();
-            
-            filteredData = guiasData.filter(guia => {
-                // Filtrar por número de guía (si hay texto)
-                const matchesNumero = numeroGuiaFilter === '' || 
-                    (guia.numeroGuia && guia.numeroGuia.toString().toLowerCase().includes(numeroGuiaFilter));
-                
-                // Filtrar por estado (si se seleccionó uno)
-                const matchesEstado = estadoFilter === '' || 
-                    (guia.estado && guia.estado.toLowerCase().includes(estadoFilter));
-                
-                return matchesNumero && matchesEstado;
-            });
-            
-            updateTable();
-            updateSummary(filteredData);
-        }
-
-        // Cargar datos desde Excel
-        excelFileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            fileNameSpan.textContent = file.name;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                
-                // Tomar la primera hoja
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                // Convertir a JSON
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                
-                // Procesar los datos
-                const nuevosDatos = jsonData.map(item => ({
-                    id: Date.now() + Math.random().toString(36).substr(2, 9), // ID único
-                    numeroGuia: item['Nro Guía'] || item['Nro Guia'] || item['NroGuía'] || item['NroGuia'] || '-',
-                    fechaEmision: item['Fecha Emisión'] || item['FechaEmisión'] || item['Fecha'] || '-',
-                    tipo: item['Tipo'] || '-',
-                    estado: item['Estado'] || '-',
-                    operador: item['Operador'] || '-',
-                    destinatario: item['Destinatario'] || '-',
-                    transportista: item['Transportista'] || '-',
-                    conductor: item['Conductor'] || item['Chofer'] || '-',
-                    patenteCamion: item['Pat. Camión'] || item['PatCamión'] || item['Patente'] || '-',
-                    patenteAcoplado: item['Pat. Acoplado'] || item['PatAcoplado'] || '-',
-                    producto: item['Producto'] || '-',
-                    pesoBruto: item['Peso Bruto'] || item['PesoBruto'] || '-',
-                    pesoTara: item['Peso Tara'] || item['PesoTara'] || '-',
-                    pesoNeto: item['Peso Neto'] || item['PesoNeto'] || '-',
-                    sellos: item['Sellos'] || '-'
-                }));
-                
-                // Agregar a los datos existentes (no reemplazar)
-                guiasData = [...guiasData, ...nuevosDatos];
-                filteredData = [...guiasData];
-                
-                // Actualizar la tabla y resumen
-                updateTable();
-                updateSummary(filteredData);
-                
-                // Guardar en localStorage
-                localStorage.setItem('guiasDespachoData', JSON.stringify(guiasData));
-                
-                // Actualizar fecha de cierre
-                updateFechaCierre();
-                
-                // Limpiar filtros
-                filtroNumeroGuia.value = '';
-                filtroEstado.value = '';
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        // Mostrar modal para confirmar eliminación con contraseña
-        clearDataBtn.addEventListener('click', function() {
-            if (guiasData.length === 0) {
-                alert('No hay datos para eliminar.');
-                return;
-            }
-            
-            passwordModal.style.display = 'flex';
-            passwordInput.value = '';
-            passwordError.style.display = 'none';
-        });
-
-        // Cancelar eliminación
-        cancelDeleteBtn.addEventListener('click', function() {
-            passwordModal.style.display = 'none';
-        });
-
-        // Confirmar eliminación con contraseña
-        confirmDeleteBtn.addEventListener('click', function() {
-            if (passwordInput.value === DELETE_PASSWORD) {
-                // Eliminar todos los datos
-                guiasData = [];
-                filteredData = [];
-                updateTable();
-                updateSummary(filteredData);
-                localStorage.removeItem('guiasDespachoData');
-                excelFileInput.value = '';
-                fileNameSpan.textContent = 'No se ha seleccionado archivo';
-                fechaCierreSpan.textContent = new Date().toLocaleDateString('es-ES');
-                
-                // Limpiar filtros
-                filtroNumeroGuia.value = '';
-                filtroEstado.value = '';
-                
-                // Cerrar modal
-                passwordModal.style.display = 'none';
-            } else {
-                // Mostrar error de contraseña
-                passwordError.style.display = 'block';
-            }
-        });
-
-        // Aplicar filtro
-        aplicarFiltroBtn.addEventListener('click', filterData);
-
-        // Limpiar filtro
-        limpiarFiltroBtn.addEventListener('click', function() {
-            filtroNumeroGuia.value = '';
-            filtroEstado.value = '';
-            filteredData = [...guiasData];
-            updateTable();
-            updateSummary(filteredData);
-        });
-
-        // Actualizar tabla
+        
+        // Actualizar tabla con paginación
         function updateTable() {
-            const dataToShow = filteredData.length > 0 ? filteredData : guiasData;
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedData = filteredData.slice(startIndex, endIndex);
             
-            if (dataToShow.length === 0) {
-                sheet2TableBody.innerHTML = `
+            if (paginatedData.length === 0) {
+                guiasTableBody.innerHTML = `
                     <tr>
-                        <td colspan="15" style="text-align: center;">No hay datos disponibles. Cargue un archivo Excel.</td>
+                        <td colspan="15" style="text-align: center;">No se encontraron registros</td>
                     </tr>
                 `;
                 return;
             }
             
             let tableHTML = '';
-            dataToShow.forEach(guia => {
+            paginatedData.forEach(guia => {
                 tableHTML += `
                     <tr>
-                        <td>${guia.numeroGuia}</td>
-                        <td>${formatFecha(guia.fechaEmision)}</td>
-                        <td>${guia.tipo}</td>
-                        <td>${guia.estado}</td>
-                        <td>${guia.operador}</td>
-                        <td>${guia.destinatario}</td>
-                        <td>${guia.transportista}</td>
-                        <td>${guia.conductor}</td>
-                        <td>${guia.patenteCamion}</td>
-                        <td>${guia.patenteAcoplado}</td>
-                        <td>${guia.producto}</td>
-                        <td>${guia.pesoBruto}</td>
-                        <td>${guia.pesoTara}</td>
-                        <td>${guia.pesoNeto}</td>
-                        <td>${guia.sellos}</td>
+                        <td>${guia.numero_guia || '-'}</td>
+                        <td>${formatFechaHora(guia.fecha_emision)}</td>
+                        <td>${guia.tipo || '-'}</td>
+                        <td>${guia.estado || '-'}</td>
+                        <td>${guia.operador || '-'}</td>
+                        <td>${guia.destinatario || '-'}</td>
+                        <td>${guia.transportista || '-'}</td>
+                        <td>${guia.conductor || '-'}</td>
+                        <td>${guia.patente_camion || '-'}</td>
+                        <td>${guia.patente_acoplado || '-'}</td>
+                        <td>${guia.producto || '-'}</td>
+                        <td>${guia.peso_bruto || '-'}</td>
+                        <td>${guia.peso_tara || '-'}</td>
+                        <td>${guia.peso_neto || '-'}</td>
+                        <td>${guia.sellos || '-'}</td>
                     </tr>
                 `;
             });
             
-            sheet2TableBody.innerHTML = tableHTML;
+            guiasTableBody.innerHTML = tableHTML;
+            
+            // Actualizar controles de paginación
+            updatePaginationControls();
         }
-
-        // Actualizar fecha de cierre
-        function updateFechaCierre() {
-            if (guiasData.length > 0) {
-                // Usar la fecha más reciente
-                const ultimaFecha = guiasData.reduce((latest, current) => {
-                    try {
-                        const currentDate = new Date(current.fechaEmision);
-                        return currentDate > latest ? currentDate : latest;
-                    } catch {
-                        return latest;
+        
+        // Actualizar controles de paginación
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            
+            prevPageBtn.disabled = currentPage <= 1;
+            nextPageBtn.disabled = currentPage >= totalPages;
+            
+            pageInfoSpan.textContent = `Página ${currentPage} de ${totalPages} | Registros ${filteredData.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}-${Math.min(currentPage * itemsPerPage, filteredData.length)} de ${filteredData.length}`;
+        }
+        
+        // Mostrar modal con detalles completos
+        function showDetailsModal(id) {
+            const guia = allGuiasData.find(item => item.id == id);
+            if (!guia) return;
+            
+            // Crear contenido del modal
+            let modalContent = `
+                <div style="max-height: 70vh; overflow-y: auto;">
+                    <h3 style="margin-bottom: 15px; color: var(--primary-color);">Detalles de la Guía #${guia.numero_guia || 'N/A'}</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+            `;
+            
+            // Agregar todos los campos del registro
+            for (const [key, value] of Object.entries(guia)) {
+                if (value !== null && value !== undefined && value !== '') {
+                    let displayValue = value;
+                    
+                    // Formatear fechas
+                    if (key.includes('fecha') || key.includes('created_at')) {
+                        displayValue = formatFechaHora(value);
                     }
-                }, new Date(0));
-                
-                if (ultimaFecha.getTime() > 0) {
-                    fechaCierreSpan.textContent = ultimaFecha.toLocaleDateString('es-ES');
-                    return;
+                    
+                    modalContent += `
+                        <div style="border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                            <strong>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong>
+                            <div style="word-break: break-word;">${displayValue || '-'}</div>
+                        </div>
+                    `;
                 }
             }
-            fechaCierreSpan.textContent = new Date().toLocaleDateString('es-ES');
-        }
-
-        // Mostrar/ocultar botón de scroll
-        window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                scrollTopBtn.classList.add('visible');
-            } else {
-                scrollTopBtn.classList.remove('visible');
-            }
-        });
-
-        // Ir al principio al hacer clic en el botón
-        scrollTopBtn.addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
+            
+            modalContent += `
+                    </div>
+                </div>
+            `;
+            
+            Swal.fire({
+                title: 'Detalles del Registro',
+                html: modalContent,
+                width: '90%',
+                confirmButtonText: 'Cerrar',
+                showCloseButton: true
             });
-        });
-
-        // Exportar a Excel
-        exportExcelBtn.addEventListener('click', function() {
-            if (guiasData.length === 0) {
-                alert('No hay datos para exportar.');
-                return;
-            }
-
-            // Preparar los datos para exportar
-            const dataToExport = (filteredData.length > 0 ? filteredData : guiasData).map(guia => ({
-                'Nro Guía': guia.numeroGuia,
-                'Fecha Emisión': formatFecha(guia.fechaEmision),
-                'Tipo': guia.tipo,
-                'Estado': guia.estado,
-                'Operador': guia.operador,
-                'Destinatario': guia.destinatario,
-                'Transportista': guia.transportista,
-                'Conductor': guia.conductor,
-                'Pat. Camión': guia.patenteCamion,
-                'Pat. Acoplado': guia.patenteAcoplado,
-                'Producto': guia.producto,
-                'Peso Bruto': guia.pesoBruto,
-                'Peso Tara': guia.pesoTara,
-                'Peso Neto': guia.pesoNeto,
-                'Sellos': guia.sellos
-            }));
-
-            // Crear hoja de trabajo
-            const ws = XLSX.utils.json_to_sheet(dataToExport);
-            
-            // Crear libro de trabajo
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Guías de Despacho");
-            
-            // Generar archivo Excel
-            const fechaExportacion = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            XLSX.writeFile(wb, `Guias_Despacho_${fechaExportacion}.xlsx`);
-        });
-
-        // Botón Volver
-        volverBtn.addEventListener('click', function() {
-            // Aquí puedes cambiar la URL o redirigir a donde corresponda
-            window.location.href = 'index.html'; // Cambia esto por la URL correcta
-        });
-
-        // Cargar datos al iniciar
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedData = localStorage.getItem('guiasDespachoData');
-            if (savedData) {
-                guiasData = JSON.parse(savedData);
-                filteredData = [...guiasData];
+        }
+        
+        // Buscar en los datos
+        function searchData(term) {
+            if (!term) {
+                filteredData = [...allGuiasData];
+                currentSearchTerm = '';
                 updateTable();
                 updateSummary(filteredData);
-                updateFechaCierre();
+                return;
+            }
+            
+            currentSearchTerm = term.toLowerCase();
+            filteredData = allGuiasData.filter(guia => {
+                // Buscar en todos los valores de texto del objeto
+                return Object.values(guia).some(value => {
+                    if (value === null || value === undefined) return false;
+                    
+                    // Convertir a string y buscar el término
+                    return value.toString().toLowerCase().includes(currentSearchTerm);
+                });
+            });
+            
+            currentPage = 1; // Resetear a la primera página
+            updateTable();
+            updateSummary(filteredData);
+            
+            if (filteredData.length === 0) {
+                showStatus('warning', 'No se encontraron registros que coincidan con la búsqueda.');
+            } else {
+                showStatus('success', `Se encontraron ${filteredData.length} registros que coinciden con la búsqueda.`);
+            }
+        }
+        
+        // Cargar datos desde Supabase
+        async function loadDataFromSupabase() {
+            loadingIndicator.style.display = 'block';
+            showStatus('info', 'Cargando datos desde Supabase...');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/guias_despacho?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                allGuiasData = data;
+                filteredData = [...allGuiasData];
+                
+                totalRecords = data.length;
+                
+                updateTable();
+                updateSummary(filteredData);
+                
+                showStatus('success', `Se cargaron ${data.length} guías de despacho desde Supabase.`);
+            } catch (error) {
+                showStatus('error', 'Error al cargar datos: ' + error.message);
+                console.error('Error al cargar datos:', error);
+                
+                guiasTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="15" style="text-align: center; color: var(--error-color);">Error al cargar datos: ${error.message}</td>
+                    </tr>
+                `;
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDataFromSupabase();
+        });
+        
+        backBtn.addEventListener('click', function() {
+            window.location.href = 'index.html';
+        });
+        
+        addNewBtn.addEventListener('click', function() {
+            window.location.href = 'guias_despacho.html';
+        });
+        
+        refreshBtn.addEventListener('click', function() {
+            loadDataFromSupabase();
+        });
+        
+        prevPageBtn.addEventListener('click', function() {
+            if (currentPage > 1) {
+                currentPage--;
+                updateTable();
+            }
+        });
+        
+        nextPageBtn.addEventListener('click', function() {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateTable();
+            }
+        });
+        
+        searchBtn.addEventListener('click', function() {
+            const searchTerm = searchInput.value.trim();
+            searchData(searchTerm);
+        });
+        
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            searchData('');
+        });
+        
+        // Permitir búsqueda al presionar Enter
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const searchTerm = searchInput.value.trim();
+                searchData(searchTerm);
+            }
+        });
+
+        // Agregar event listener para hacer clic en filas y mostrar detalles
+        guiasTableBody.addEventListener('click', function(e) {
+            const row = e.target.closest('tr');
+            if (row) {
+                const id = allGuiasData[(currentPage - 1) * itemsPerPage + row.rowIndex - 1].id;
+                showDetailsModal(id);
             }
         });
     </script>

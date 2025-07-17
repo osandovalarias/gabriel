@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Guías de Despacho</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #5c6bc0;
+            --secondary-color: #3949ab;
+            --accent-color: #7986cb;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --error-color: #f44336;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--box-shadow);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            text-align: center;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+
+        .btn-error {
+            background-color: var(--error-color);
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .file-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .file-input-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.7rem 1.5rem;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .file-input-label:hover {
+            background-color: #3e8e41;
+            transform: translateY(-2px);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            color: var(--dark-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: var(--box-shadow);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            display: none;
+            box-shadow: var(--box-shadow);
+        }
+
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .status-message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            display: block;
+        }
+
+        .status-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 15px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .summary-card h3 {
+            font-size: 16px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .summary-card p {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .actions-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .actions-container, .nav-buttons {
+                flex-direction: column;
+            }
+            
+            .btn, .file-input-label {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+            
+            .summary-card {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <i class="fas fa-file-invoice"></i>
+                Gestor de Guías de Despacho
+            </h1>
+        </header>
+
+        <div class="nav-buttons">
+            <button class="btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <button class="btn btn-info" id="reviewBtn">
+                <i class="fas fa-search"></i> Revisar Guías
+            </button>
+        </div>
+
+        <div class="actions-container">
+            <div class="file-input-container">
+                <label for="excelFile" class="file-input-label">
+                    <i class="fas fa-file-excel"></i> Cargar Excel
+                </label>
+                <span id="fileName" class="file-name">No se ha seleccionado archivo</span>
+                <input type="file" id="excelFile" class="file-input" accept=".xlsx, .xls, .csv">
+                <button class="btn btn-warning" id="clearData">
+                    <i class="fas fa-trash"></i> Limpiar Datos
+                </button>
+            </div>
+            
+            <button class="btn btn-success" id="saveToSupabase">
+                <i class="fas fa-database"></i> Guardar en Supabase
+            </button>
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+        <div class="loading" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <p>Procesando datos...</p>
+        </div>
+
+        <div class="summary-container">
+            <div class="summary-card">
+                <h3>Guías Totales</h3>
+                <p id="totalGuias">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Guías Vigentes</h3>
+                <p id="guiasVigentes">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Guías Anuladas</h3>
+                <p id="guiasAnuladas">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Total Peso Neto</h3>
+                <p id="totalPesoNeto">0</p>
+            </div>
+        </div>
+
+        <table id="guiasTable">
+            <thead>
+                <tr>
+                    <th>Nro Guía</th>
+                    <th>Fecha Emisión</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Operador</th>
+                    <th>Destinatario</th>
+                    <th>Transportista</th>
+                    <th>Conductor</th>
+                    <th>Pat. Camión</th>
+                    <th>Pat. Acoplado</th>
+                    <th>Producto</th>
+                    <th>Peso Bruto</th>
+                    <th>Peso Tara</th>
+                    <th>Peso Neto</th>
+                    <th>Sellos</th>
+                </tr>
+            </thead>
+            <tbody id="guiasTableBody">
+                <tr>
+                    <td colspan="15" style="text-align: center;">No hay datos disponibles. Cargue un archivo Excel.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://qshotifyajtvommvpyjb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzaG90aWZ5YWp0dm9tbXZweWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3Nzg2MjEsImV4cCI6MjA2ODM1NDYyMX0.OJacqcH9AeZETyhjNpHbwJaRJbNgNHixd2reFXWkCr8';
+        
+        // Elementos del DOM
+        const excelFileInput = document.getElementById('excelFile');
+        const fileNameSpan = document.getElementById('fileName');
+        const clearDataBtn = document.getElementById('clearData');
+        const saveToSupabaseBtn = document.getElementById('saveToSupabase');
+        const guiasTableBody = document.getElementById('guiasTableBody');
+        const statusMessage = document.getElementById('statusMessage');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const totalGuiasSpan = document.getElementById('totalGuias');
+        const guiasVigentesSpan = document.getElementById('guiasVigentes');
+        const guiasAnuladasSpan = document.getElementById('guiasAnuladas');
+        const totalPesoNetoSpan = document.getElementById('totalPesoNeto');
+        const backBtn = document.getElementById('backBtn');
+        const reviewBtn = document.getElementById('reviewBtn');
+        
+        // Datos en memoria
+        let guiasData = [];
+        
+        // Formatear fecha para visualización
+        function formatFecha(fecha) {
+            if (!fecha) return '-';
+            
+            if (fecha instanceof Date) {
+                return `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth()+1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
+            }
+            
+            if (typeof fecha === 'string' && fecha.includes('T')) {
+                const dateObj = new Date(fecha);
+                return formatFecha(dateObj);
+            }
+            
+            if (typeof fecha === 'number') {
+                const dateObj = new Date((fecha - (25567 + 2)) * 86400 * 1000);
+                return formatFecha(dateObj);
+            }
+            
+            return fecha;
+        }
+        
+        // Mostrar mensaje de estado
+        function showStatus(type, message) {
+            statusMessage.className = 'status-message ' + type;
+            statusMessage.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'exclamation-triangle'}"></i> ${message}`;
+        }
+        
+        // Actualizar resumen de datos
+        function updateSummary() {
+            const total = guiasData.length;
+            const vigentes = guiasData.filter(g => g.estado && g.estado.toLowerCase().includes('vigente')).length;
+            const anuladas = guiasData.filter(g => g.estado && g.estado.toLowerCase().includes('anulada')).length;
+            
+            let totalPesoNeto = 0;
+            
+            guiasData.forEach(guia => {
+                if (guia.pesoNeto && !isNaN(guia.pesoNeto)) {
+                    totalPesoNeto += Number(guia.pesoNeto);
+                }
+            });
+            
+            totalGuiasSpan.textContent = total;
+            guiasVigentesSpan.textContent = vigentes;
+            guiasAnuladasSpan.textContent = anuladas;
+            totalPesoNetoSpan.textContent = totalPesoNeto.toFixed(2);
+        }
+        
+        // Actualizar tabla
+        function updateTable() {
+            if (guiasData.length === 0) {
+                guiasTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="15" style="text-align: center;">No hay datos disponibles. Cargue un archivo Excel.</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let tableHTML = '';
+            guiasData.forEach(guia => {
+                tableHTML += `
+                    <tr>
+                        <td>${guia.numeroGuia}</td>
+                        <td>${formatFecha(guia.fechaEmision)}</td>
+                        <td>${guia.tipo}</td>
+                        <td>${guia.estado}</td>
+                        <td>${guia.operador}</td>
+                        <td>${guia.destinatario}</td>
+                        <td>${guia.transportista}</td>
+                        <td>${guia.conductor}</td>
+                        <td>${guia.patenteCamion}</td>
+                        <td>${guia.patenteAcoplado}</td>
+                        <td>${guia.producto}</td>
+                        <td>${guia.pesoBruto}</td>
+                        <td>${guia.pesoTara}</td>
+                        <td>${guia.pesoNeto}</td>
+                        <td>${guia.sellos}</td>
+                    </tr>
+                `;
+            });
+            
+            guiasTableBody.innerHTML = tableHTML;
+        }
+
+        // Limpiar todos los datos de la pantalla
+        function clearScreen() {
+            guiasData = [];
+            excelFileInput.value = '';
+            fileNameSpan.textContent = 'No se ha seleccionado archivo';
+            updateTable();
+            updateSummary();
+            localStorage.removeItem('guiasDespachoData');
+            showStatus('success', 'Datos limpiados correctamente.');
+        }
+        
+        // Cargar datos desde Excel
+        excelFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            fileNameSpan.textContent = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    const nuevosDatos = jsonData.map(item => ({
+                        id: Date.now() + Math.random().toString(36).substr(2, 9),
+                        numeroGuia: item['Nro Guía'] || item['Nro Guia'] || item['NroGuía'] || item['NroGuia'] || '-',
+                        fechaEmision: item['Fecha Emisión'] || item['FechaEmisión'] || item['Fecha'] || '-',
+                        tipo: item['Tipo'] || '-',
+                        estado: item['Estado'] || '-',
+                        operador: item['Operador'] || '-',
+                        destinatario: item['Destinatario'] || '-',
+                        transportista: item['Transportista'] || '-',
+                        conductor: item['Conductor'] || item['Chofer'] || '-',
+                        patenteCamion: item['Pat. Camión'] || item['PatCamión'] || item['Patente'] || '-',
+                        patenteAcoplado: item['Pat. Acoplado'] || item['PatAcoplado'] || '-',
+                        producto: item['Producto'] || '-',
+                        pesoBruto: item['Peso Bruto'] || item['PesoBruto'] || '-',
+                        pesoTara: item['Peso Tara'] || item['PesoTara'] || '-',
+                        pesoNeto: item['Peso Neto'] || item['PesoNeto'] || '-',
+                        sellos: item['Sellos'] || '-'
+                    }));
+                    
+                    guiasData = [...guiasData, ...nuevosDatos];
+                    updateTable();
+                    updateSummary();
+                    
+                    localStorage.setItem('guiasDespachoData', JSON.stringify(guiasData));
+                    
+                    showStatus('success', `Se cargaron ${nuevosDatos.length} nuevas guías. Total: ${guiasData.length}`);
+                } catch (error) {
+                    showStatus('error', 'Error al procesar el archivo: ' + error.message);
+                    console.error(error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+        
+        // Limpiar datos
+        clearDataBtn.addEventListener('click', function() {
+            if (guiasData.length === 0) {
+                showStatus('warning', 'No hay datos para limpiar.');
+                return;
+            }
+            
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: `Se eliminarán ${guiasData.length} guías de despacho. Esta acción no se puede deshacer.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    clearScreen();
+                }
+            });
+        });
+        
+        // Guardar datos en Supabase
+        async function saveDataToSupabase() {
+            if (guiasData.length === 0) {
+                showStatus('warning', 'No hay datos para guardar.');
+                return;
+            }
+            
+            loadingIndicator.style.display = 'block';
+            saveToSupabaseBtn.disabled = true;
+            showStatus('info', 'Preparando datos para guardar en Supabase...');
+            
+            try {
+                let successCount = 0;
+                let duplicateCount = 0;
+                let errorCount = 0;
+                
+                // Procesar cada guía individualmente
+                for (const guia of guiasData) {
+                    try {
+                        // Verificar si la guía ya existe en Supabase
+                        const existsResponse = await fetch(
+                            `${SUPABASE_URL}/rest/v1/guias_despacho?numero_guia=eq.${encodeURIComponent(guia.numeroGuia)}&select=numero_guia`,
+                            {
+                                headers: {
+                                    'apikey': SUPABASE_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                                }
+                            }
+                        );
+                        
+                        if (!existsResponse.ok) {
+                            throw new Error(`Error al verificar guía: ${existsResponse.status}`);
+                        }
+                        
+                        const existingData = await existsResponse.json();
+                        
+                        if (existingData.length > 0) {
+                            duplicateCount++;
+                            continue;
+                        }
+                        
+                        // Preparar datos para Supabase (todos como texto)
+                        const guiaData = {
+                            numero_guia: String(guia.numeroGuia),
+                            fecha_emision: String(guia.fechaEmision),
+                            tipo: String(guia.tipo),
+                            estado: String(guia.estado),
+                            operador: String(guia.operador),
+                            destinatario: String(guia.destinatario),
+                            transportista: String(guia.transportista),
+                            conductor: String(guia.conductor),
+                            patente_camion: String(guia.patenteCamion),
+                            patente_acoplado: String(guia.patenteAcoplado),
+                            producto: String(guia.producto),
+                            peso_bruto: String(guia.pesoBruto),
+                            peso_tara: String(guia.pesoTara),
+                            peso_neto: String(guia.pesoNeto),
+                            sellos: String(guia.sellos)
+                        };
+                        
+                        // Insertar en Supabase
+                        const insertResponse = await fetch(`${SUPABASE_URL}/rest/v1/guias_despacho`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                'Prefer': 'return=minimal'
+                            },
+                            body: JSON.stringify(guiaData)
+                        });
+                        
+                        if (!insertResponse.ok) {
+                            throw new Error(`Error ${insertResponse.status}: ${insertResponse.statusText}`);
+                        }
+                        
+                        successCount++;
+                        
+                        // Actualizar estado cada 10 registros
+                        if (successCount % 10 === 0) {
+                            showStatus('success', `Guardando datos... ${successCount} guías guardadas, ${duplicateCount} duplicadas.`);
+                        }
+                    } catch (error) {
+                        console.error(`Error al guardar guía ${guia.numeroGuia}:`, error);
+                        errorCount++;
+                    }
+                }
+                
+                // Mostrar resumen final
+                let message = `Proceso completado. `;
+                message += `Guías guardadas: ${successCount}. `;
+                message += `Guías duplicadas (no guardadas): ${duplicateCount}. `;
+                
+                if (errorCount > 0) {
+                    message += `Errores: ${errorCount}.`;
+                    showStatus('error', message);
+                } else {
+                    showStatus('success', message);
+                }
+                
+                // Limpiar pantalla después de guardar
+                clearScreen();
+                
+                if (successCount > 0) {
+                    Swal.fire(
+                        '¡Éxito!',
+                        `Se guardaron ${successCount} guías en Supabase.`,
+                        'success'
+                    );
+                }
+            } catch (error) {
+                showStatus('error', 'Error general al guardar datos: ' + error.message);
+                console.error('Error general:', error);
+            } finally {
+                loadingIndicator.style.display = 'none';
+                saveToSupabaseBtn.disabled = false;
+            }
+        }
+
+        // Evento para guardar en Supabase
+        saveToSupabaseBtn.addEventListener('click', async function() {
+            Swal.fire({
+                title: 'Confirmar Guardado',
+                text: `¿Estás seguro de guardar ${guiasData.length} guías en Supabase?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    saveDataToSupabase();
+                }
+            });
+        });
+
+        // Botón Volver
+        backBtn.addEventListener('click', function() {
+            window.location.href = 'guias-despacho.html';
+        });
+
+        // Botón Revisar Guías
+        reviewBtn.addEventListener('click', function() {
+            window.location.href = 'guias-despacho.html';
+        });
+        
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedData = localStorage.getItem('guiasDespachoData');
+            if (savedData) {
+                guiasData = JSON.parse(savedData);
+                updateTable();
+                updateSummary();
+                showStatus('info', `Datos cargados desde el almacenamiento local. ${guiasData.length} guías disponibles.`);
+            }
+        });
+    </script>
+</body>
+</html>

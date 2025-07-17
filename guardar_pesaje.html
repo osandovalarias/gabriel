@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardar Registros de Pesaje</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #5c6bc0;
+            --secondary-color: #3949ab;
+            --accent-color: #7986cb;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --error-color: #f44336;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--box-shadow);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            text-align: center;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+
+        .btn-error {
+            background-color: var(--error-color);
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .file-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .file-input-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.7rem 1.5rem;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .file-input-label:hover {
+            background-color: #3e8e41;
+            transform: translateY(-2px);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            color: var(--dark-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: var(--box-shadow);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            display: none;
+            box-shadow: var(--box-shadow);
+        }
+
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .status-message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            display: block;
+        }
+
+        .status-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 15px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .summary-card h3 {
+            font-size: 16px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .summary-card p {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .actions-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .actions-container, .nav-buttons {
+                flex-direction: column;
+            }
+            
+            .btn, .file-input-label {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+            
+            .summary-card {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <i class="fas fa-weight"></i>
+                Gestor de Registros de Pesaje
+            </h1>
+        </header>
+
+        <div class="nav-buttons">
+            <button class="btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <button class="btn btn-info" id="reviewBtn">
+                <i class="fas fa-search"></i> Revisar Pesajes
+            </button>
+        </div>
+
+        <div class="actions-container">
+            <div class="file-input-container">
+                <label for="excelFile" class="file-input-label">
+                    <i class="fas fa-file-excel"></i> Cargar Excel
+                </label>
+                <span id="fileName" class="file-name">No se ha seleccionado archivo</span>
+                <input type="file" id="excelFile" class="file-input" accept=".xlsx, .xls, .csv">
+                <button class="btn btn-warning" id="clearData">
+                    <i class="fas fa-trash"></i> Limpiar Datos
+                </button>
+            </div>
+            
+            <button class="btn btn-success" id="saveToSupabase">
+                <i class="fas fa-database"></i> Guardar en Supabase
+            </button>
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+        <div class="loading" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <p>Procesando datos...</p>
+        </div>
+
+        <div class="summary-container">
+            <div class="summary-card">
+                <h3>Registros Totales</h3>
+                <p id="totalRegistros">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Peso Bruto Total</h3>
+                <p id="totalPesoBruto">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Peso Neto Total</h3>
+                <p id="totalPesoNeto">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Última Fecha</h3>
+                <p id="ultimaFecha">-</p>
+            </div>
+        </div>
+
+        <table id="pesajesTable">
+            <thead>
+                <tr>
+                    <th>Base</th>
+                    <th>Báscula Tara</th>
+                    <th>Tipo Báscula Tara</th>
+                    <th>Báscula P.Comercial</th>
+                    <th>Tipo Báscula P.Comercial</th>
+                    <th>N° Pesaje</th>
+                    <th>N° Pesaje Ejes</th>
+                    <th>Patente</th>
+                    <th>Patente Acoplado</th>
+                    <th>Código Tipo Acoplado</th>
+                    <th>Descr. Tipo Acoplado</th>
+                    <th>ID Transportista</th>
+                    <th>Transportista</th>
+                    <th>Chofer Tara</th>
+                    <th>Chofer P.Comercial</th>
+                    <th>Observaciones Tara</th>
+                    <th>Observaciones P.Comercial</th>
+                    <th>Fecha Hora Tara</th>
+                    <th>Fecha Hora P.Comercial</th>
+                    <th>Tipo Camión</th>
+                    <th>Código Tipo Carga</th>
+                    <th>Tipo Carga</th>
+                    <th>Tara</th>
+                    <th>Peso Bruto Total</th>
+                    <th>Peso Bruto Comercial</th>
+                    <th>Peso Neto</th>
+                    <th>Peso Neto Informado</th>
+                    <th>Ciclo</th>
+                    <th>Operador Tara</th>
+                    <th>Operador P.Comercial</th>
+                    <th>Motivo corrección</th>
+                    <th>Factor corrección peso neto</th>
+                    <th>Motivo Anulación</th>
+                    <th>Rut Origen</th>
+                    <th>Razón Social Origen</th>
+                    <th>Código Sucursal Origen</th>
+                    <th>Nombre Sucursal Origen</th>
+                    <th>Comuna Sucursal Origen</th>
+                    <th>Rut Destino</th>
+                    <th>Razon Social Destino</th>
+                    <th>Código Sucursal Destino</th>
+                    <th>Nombre Sucursal Destino</th>
+                    <th>Comuna Sucursal Destino</th>
+                    <th>Tipo Documento</th>
+                    <th>N° Documento</th>
+                    <th>Fecha Documento</th>
+                    <th>Código Producto</th>
+                    <th>Nombre Producto</th>
+                    <th>Cant. Producto</th>
+                    <th>Peso Infor. Producto</th>
+                    <th>Código Envase (Com.)</th>
+                    <th>Nombre Envase (Com.)</th>
+                    <th>Cant. Envases (Com.)</th>
+                    <th>Tara Envase (Com.)</th>
+                    <th>CANTIDAD DIG</th>
+                    <th>ENVASE</th>
+                    <th>GIRO DIG</th>
+                    <th>N° DE LOTE</th>
+                    <th>MAXISACOS</th>
+                    <th>SELLOS</th>
+                    <th>EMPRESA</th>
+                    <th>KGS</th>
+                    <th>PATENTE3</th>
+                    <th>PESBRUTO</th>
+                    <th>PESNETO</th>
+                    <th>PESTARA</th>
+                    <th>REFERENCIA</th>
+                    <th>SELLOS</th>
+                    <th>TRASLADO</th>
+                    <th>Código Envase (Tara)</th>
+                    <th>Nombre Envase (Tara)</th>
+                    <th>Cant. Envases (Tara)</th>
+                    <th>Tara Envase (Tara)</th>
+                    <th>Tara Envases (Tara)</th>
+                </tr>
+            </thead>
+            <tbody id="pesajesTableBody">
+                <tr>
+                    <td colspan="12" style="text-align: center;">No hay datos disponibles. Cargue un archivo Excel.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://qshotifyajtvommvpyjb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzaG90aWZ5YWp0dm9tbXZweWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3Nzg2MjEsImV4cCI6MjA2ODM1NDYyMX0.OJacqcH9AeZETyhjNpHbwJaRJbNgNHixd2reFXWkCr8';
+        
+        // Elementos del DOM
+        const excelFileInput = document.getElementById('excelFile');
+        const fileNameSpan = document.getElementById('fileName');
+        const clearDataBtn = document.getElementById('clearData');
+        const saveToSupabaseBtn = document.getElementById('saveToSupabase');
+        const pesajesTableBody = document.getElementById('pesajesTableBody');
+        const statusMessage = document.getElementById('statusMessage');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const totalRegistrosSpan = document.getElementById('totalRegistros');
+        const totalPesoBrutoSpan = document.getElementById('totalPesoBruto');
+        const totalPesoNetoSpan = document.getElementById('totalPesoNeto');
+        const ultimaFechaSpan = document.getElementById('ultimaFecha');
+        const backBtn = document.getElementById('backBtn');
+        const reviewBtn = document.getElementById('reviewBtn');
+        
+        // Datos en memoria
+        let pesajesData = [];
+        
+        // Formatear fecha para visualización
+        function formatFecha(fecha) {
+            if (!fecha) return '-';
+            
+            if (fecha instanceof Date) {
+                return `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth()+1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
+            }
+            
+            if (typeof fecha === 'string' && fecha.includes('T')) {
+                const dateObj = new Date(fecha);
+                return formatFecha(dateObj);
+            }
+            
+            if (typeof fecha === 'number') {
+                const dateObj = new Date((fecha - (25567 + 2)) * 86400 * 1000);
+                return formatFecha(dateObj);
+            }
+            
+            return fecha;
+        }
+        
+        // Formatear fecha y hora para visualización
+        function formatFechaHora(fecha) {
+            if (!fecha) return '-';
+            
+            if (fecha instanceof Date) {
+                return `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth()+1).toString().padStart(2, '0')}/${fecha.getFullYear()} ${fecha.getHours().toString().padStart(2, '0')}:${fecha.getMinutes().toString().padStart(2, '0')}`;
+            }
+            
+            if (typeof fecha === 'string' && fecha.includes('T')) {
+                const dateObj = new Date(fecha);
+                return formatFechaHora(dateObj);
+            }
+            
+            if (typeof fecha === 'number') {
+                const dateObj = new Date((fecha - (25567 + 2)) * 86400 * 1000);
+                return formatFechaHora(dateObj);
+            }
+            
+            return fecha;
+        }
+        
+        // Mostrar mensaje de estado
+        function showStatus(type, message) {
+            statusMessage.className = 'status-message ' + type;
+            statusMessage.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'exclamation-triangle'}"></i> ${message}`;
+        }
+        
+        // Actualizar resumen de datos
+        function updateSummary() {
+            const total = pesajesData.length;
+            
+            let totalPesoBruto = 0;
+            let totalPesoNeto = 0;
+            let ultimaFecha = null;
+            
+            pesajesData.forEach(pesaje => {
+                if (pesaje.pesoBrutoTotal && !isNaN(pesaje.pesoBrutoTotal)) {
+                    totalPesoBruto += Number(pesaje.pesoBrutoTotal);
+                }
+                
+                if (pesaje.pesoNeto && !isNaN(pesaje.pesoNeto)) {
+                    totalPesoNeto += Number(pesaje.pesoNeto);
+                }
+                
+                if (pesaje.fechaHoraTara) {
+                    const fecha = new Date(pesaje.fechaHoraTara);
+                    if (!ultimaFecha || fecha > ultimaFecha) {
+                        ultimaFecha = fecha;
+                    }
+                }
+            });
+            
+            totalRegistrosSpan.textContent = total;
+            totalPesoBrutoSpan.textContent = totalPesoBruto.toFixed(2);
+            totalPesoNetoSpan.textContent = totalPesoNeto.toFixed(2);
+            ultimaFechaSpan.textContent = ultimaFecha ? formatFecha(ultimaFecha) : '-';
+        }
+        
+        // Actualizar tabla
+        function updateTable() {
+            if (pesajesData.length === 0) {
+                pesajesTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="12" style="text-align: center;">No hay datos disponibles. Cargue un archivo Excel.</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let tableHTML = '';
+            pesajesData.forEach(pesaje => {
+                tableHTML += `
+                    <tr>
+                        <td>${pesaje.base || '-'}</td>
+                        <td>${pesaje.basculaTara || '-'}</td>
+                        <td>${pesaje.tipoBasculaTara || '-'}</td>
+                        <td>${pesaje.basculaPComercial || '-'}</td>
+                        <td>${pesaje.tipoBasculaPComercial || '-'}</td>
+                        <td>${pesaje.numeroPesaje || '-'}</td>
+                        <td>${pesaje.numeroPesajeEjes || '-'}</td>
+                        <td>${pesaje.patente || '-'}</td>
+                        <td>${pesaje.patenteAcoplado || '-'}</td>
+                        <td>${pesaje.codigoTipoAcoplado || '-'}</td>
+                        <td>${pesaje.descripcionTipoAcoplado || '-'}</td>
+                        <td>${pesaje.idTransportista || '-'}</td>
+                        <td>${pesaje.transportista || '-'}</td>
+                        <td>${pesaje.choferTara || '-'}</td>
+                        <td>${pesaje.choferPComercial || '-'}</td>
+                        <td>${pesaje.observacionesTara || '-'}</td>
+                        <td>${pesaje.observacionesPComercial || '-'}</td>
+                        <td>${formatFechaHora(pesaje.fechaHoraTara)}</td>
+                        <td>${formatFechaHora(pesaje.fechaHoraPComercial)}</td>
+                        <td>${pesaje.tipoCamion || '-'}</td>
+                        <td>${pesaje.codigoTipoCarga || '-'}</td>
+                        <td>${pesaje.tipoCarga || '-'}</td>
+                        <td>${pesaje.tara || '-'}</td>
+                        <td>${pesaje.pesoBrutoTotal || '-'}</td>
+                        <td>${pesaje.pesoBrutoComercial || '-'}</td>
+                        <td>${pesaje.pesoNeto || '-'}</td>
+                        <td>${pesaje.pesoNetoInformado || '-'}</td>
+                        <td>${pesaje.ciclo || '-'}</td>
+                        <td>${pesaje.operadorTara || '-'}</td>
+                        <td>${pesaje.operadorPComercial || '-'}</td>
+                        <td>${pesaje.motivoCorreccion || '-'}</td>
+                        <td>${pesaje.factorCorreccionPesoNeto || '-'}</td>
+                        <td>${pesaje.motivoAnulacion || '-'}</td>
+                        <td>${pesaje.rutOrigen || '-'}</td>
+                        <td>${pesaje.razonSocialOrigen || '-'}</td>
+                        <td>${pesaje.codigoSucursalOrigen || '-'}</td>
+                        <td>${pesaje.nombreSucursalOrigen || '-'}</td>
+                        <td>${pesaje.comunaSucursalOrigen || '-'}</td>
+                        <td>${pesaje.rutDestino || '-'}</td>
+                        <td>${pesaje.razonSocialDestino || '-'}</td>
+                        <td>${pesaje.codigoSucursalDestino || '-'}</td>
+                        <td>${pesaje.nombreSucursalDestino || '-'}</td>
+                        <td>${pesaje.comunaSucursalDestino || '-'}</td>
+                        <td>${pesaje.tipoDocumento || '-'}</td>
+                        <td>${pesaje.numeroDocumento || '-'}</td>
+                        <td>${formatFechaHora(pesaje.fechaDocumento)}</td>
+                        <td>${pesaje.codigoProducto || '-'}</td>
+                        <td>${pesaje.nombreProducto || '-'}</td>
+                        <td>${pesaje.cantidadProducto || '-'}</td>
+                        <td>${pesaje.pesoInformadoProducto || '-'}</td>
+                        <td>${pesaje.codigoEnvaseCom || '-'}</td>
+                        <td>${pesaje.nombreEnvaseCom || '-'}</td>
+                        <td>${pesaje.cantidadEnvasesCom || '-'}</td>
+                        <td>${pesaje.taraEnvaseCom || '-'}</td>
+                        <td>${pesaje.cantidadDig || '-'}</td>
+                        <td>${pesaje.envase || '-'}</td>
+                        <td>${pesaje.giroDig || '-'}</td>
+                        <td>${pesaje.numeroLote || '-'}</td>
+                        <td>${pesaje.maxisacos || '-'}</td>
+                        <td>${pesaje.sellos || '-'}</td>
+                        <td>${pesaje.empresa || '-'}</td>
+                        <td>${pesaje.kgs || '-'}</td>
+                        <td>${pesaje.patente3 || '-'}</td>
+                        <td>${pesaje.pesbruto || '-'}</td>
+                        <td>${pesaje.pesneto || '-'}</td>
+                        <td>${pesaje.pestara || '-'}</td>
+                        <td>${pesaje.referencia || '-'}</td>
+                        <td>${pesaje.sellos || '-'}</td>
+                        <td>${pesaje.traslado || '-'}</td>
+                        <td>${pesaje.codigoEnvaseTara || '-'}</td>
+                        <td>${pesaje.nombreEnvaseTara || '-'}</td>
+                        <td>${pesaje.cantidadEnvasesTara || '-'}</td>
+                        <td>${pesaje.taraEnvaseTara || '-'}</td>
+                        <td>${pesaje.taraEnvasesTara || '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            pesajesTableBody.innerHTML = tableHTML;
+        }
+
+        // Limpiar todos los datos de la pantalla
+        function clearScreen() {
+            pesajesData = [];
+            excelFileInput.value = '';
+            fileNameSpan.textContent = 'No se ha seleccionado archivo';
+            updateTable();
+            updateSummary();
+            localStorage.removeItem('pesajesData');
+            showStatus('success', 'Datos limpiados correctamente.');
+        }
+        
+        // Cargar datos desde Excel
+        excelFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            fileNameSpan.textContent = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    // Mapear los datos del Excel a nuestra estructura
+                    const nuevosDatos = jsonData.map(item => {
+                        // Convertir fechas de Excel a formato JavaScript
+                        const convertirFechaExcel = (excelDate) => {
+                            if (!excelDate) return null;
+                            if (typeof excelDate === 'number') {
+                                return new Date((excelDate - (25567 + 2)) * 86400 * 1000);
+                            }
+                            return excelDate;
+                        };
+                        
+                        return {
+                            base: item.Base || null,
+                            basculaTara: item['Báscula Tara'] || item['BásculaTara'] || null,
+                            tipoBasculaTara: item['Tipo Báscula Tara'] || item['TipoBásculaTara'] || null,
+                            basculaPComercial: item['Báscula P.Comercial'] || item['BásculaPComercial'] || null,
+                            tipoBasculaPComercial: item['Tipo Báscula P.Comercial'] || item['TipoBásculaPComercial'] || null,
+                            numeroPesaje: item['N° Pesaje'] || item['N°Pesaje'] || item.NumeroPesaje || null,
+                            numeroPesajeEjes: item['N° Pesaje Ejes'] || item['N°PesajeEjes'] || item.NumeroPesajeEjes || null,
+                            patente: item.Patente || null,
+                            patenteAcoplado: item['Patente Acoplado'] || item.PatenteAcoplado || null,
+                            codigoTipoAcoplado: item['Código Tipo Acoplado'] || item.CodigoTipoAcoplado || null,
+                            descripcionTipoAcoplado: item['Descr. Tipo Acoplado'] || item.DescripcionTipoAcoplado || null,
+                            idTransportista: item['ID Transportista'] || item.IDTransportista || null,
+                            transportista: item.Transportista || null,
+                            choferTara: item['Chofer Tara'] || item.ChoferTara || null,
+                            choferPComercial: item['Chofer P.Comercial'] || item.ChoferPComercial || null,
+                            observacionesTara: item['Observaciones Tara'] || item.ObservacionesTara || null,
+                            observacionesPComercial: item['Observaciones P.Comercial'] || item.ObservacionesPComercial || null,
+                            fechaHoraTara: convertirFechaExcel(item['Fecha Hora Tara'] || item.FechaHoraTara),
+                            fechaHoraPComercial: convertirFechaExcel(item['Fecha Hora P.Comercial'] || item.FechaHoraPComercial),
+                            tipoCamion: item['Tipo Camión'] || item.TipoCamion || null,
+                            codigoTipoCarga: item['Código Tipo Carga'] || item.CodigoTipoCarga || null,
+                            tipoCarga: item['Tipo Carga'] || item.TipoCarga || null,
+                            tara: item.Tara || null,
+                            pesoBrutoTotal: item['Peso Bruto Total'] || item.PesoBrutoTotal || null,
+                            pesoBrutoComercial: item['Peso Bruto Comercial'] || item.PesoBrutoComercial || null,
+                            pesoNeto: item['Peso Neto'] || item.PesoNeto || null,
+                            pesoNetoInformado: item['Peso Neto Informado'] || item.PesoNetoInformado || null,
+                            ciclo: item.Ciclo || null,
+                            operadorTara: item['Operador Tara'] || item.OperadorTara || null,
+                            operadorPComercial: item['Operador P.Comercial'] || item.OperadorPComercial || null,
+                            motivoCorreccion: item['Motivo corrección'] || item.MotivoCorreccion || null,
+                            factorCorreccionPesoNeto: item['Factor corrección peso neto'] || item.FactorCorreccionPesoNeto || null,
+                            motivoAnulacion: item['Motivo Anulación'] || item.MotivoAnulacion || null,
+                            rutOrigen: item['Rut Origen'] || item.RutOrigen || null,
+                            razonSocialOrigen: item['Razón Social Origen'] || item.RazonSocialOrigen || null,
+                            codigoSucursalOrigen: item['Código Sucursal Origen'] || item.CodigoSucursalOrigen || null,
+                            nombreSucursalOrigen: item['Nombre Sucursal Origen'] || item.NombreSucursalOrigen || null,
+                            comunaSucursalOrigen: item['Comuna Sucursal Origen'] || item.ComunaSucursalOrigen || null,
+                            rutDestino: item['Rut Destino'] || item.RutDestino || null,
+                            razonSocialDestino: item['Razon Social Destino'] || item.RazonSocialDestino || null,
+                            codigoSucursalDestino: item['Código Sucursal Destino'] || item.CodigoSucursalDestino || null,
+                            nombreSucursalDestino: item['Nombre Sucursal Destino'] || item.NombreSucursalDestino || null,
+                            comunaSucursalDestino: item['Comuna Sucursal Destino'] || item.ComunaSucursalDestino || null,
+                            tipoDocumento: item['Tipo Documento'] || item.TipoDocumento || null,
+                            numeroDocumento: item['N° Documento'] || item['N°Documento'] || item.NumeroDocumento || null,
+                            fechaDocumento: convertirFechaExcel(item['Fecha Documento'] || item.FechaDocumento),
+                            codigoProducto: item['Código Producto'] || item.CodigoProducto || null,
+                            nombreProducto: item['Nombre Producto'] || item.NombreProducto || null,
+                            cantidadProducto: item['Cant. Producto'] || item.CantidadProducto || null,
+                            pesoInformadoProducto: item['Peso Infor. Producto'] || item.PesoInformadoProducto || null,
+                            codigoEnvaseCom: item['Código Envase (Com.)'] || item.CodigoEnvaseCom || null,
+                            nombreEnvaseCom: item['Nombre Envase (Com.)'] || item.NombreEnvaseCom || null,
+                            cantidadEnvasesCom: item['Cant. Envases (Com.)'] || item.CantidadEnvasesCom || null,
+                            taraEnvaseCom: item['Tara Envase (Com.)'] || item.TaraEnvaseCom || null,
+                            cantidadDig: item['CANTIDAD DIG'] || null,
+                            envase: item['ENVASE'] || null,
+                            giroDig: item['GIRO DIG'] || null,
+                            numeroLote: item['N° DE LOTE'] || item['N°DeLote'] || null,
+                            maxisacos: item['MAXISACOS'] || null,
+                            sellos: item['SELLOS'] || null,
+                            empresa: item['EMPRESA'] || null,
+                            kgs: item['KGS'] || null,
+                            patente3: item['PATENTE3'] || null,
+                            pesbruto: item['PESBRUTO'] || null,
+                            pesneto: item['PESNETO'] || null,
+                            pestara: item['PESTARA'] || null,
+                            referencia: item['REFERENCIA'] || null,
+                            traslado: item['TRASLADO'] || null,
+                            codigoEnvaseTara: item['Código Envase (Tara)'] || item.CodigoEnvaseTara || null,
+                            nombreEnvaseTara: item['Nombre Envase (Tara)'] || item.NombreEnvaseTara || null,
+                            cantidadEnvasesTara: item['Cant. Envases (Tara)'] || item.CantidadEnvasesTara || null,
+                            taraEnvaseTara: item['Tara Envase (Tara)'] || item.TaraEnvaseTara || null,
+                            taraEnvasesTara: item['Tara Envases (Tara)'] || item.TaraEnvasesTara || null
+                        };
+                    });
+                    
+                    pesajesData = [...pesajesData, ...nuevosDatos];
+                    updateTable();
+                    updateSummary();
+                    
+                    localStorage.setItem('pesajesData', JSON.stringify(pesajesData));
+                    
+                    showStatus('success', `Se cargaron ${nuevosDatos.length} nuevos registros. Total: ${pesajesData.length}`);
+                } catch (error) {
+                    showStatus('error', 'Error al procesar el archivo: ' + error.message);
+                    console.error(error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+        
+        // Limpiar datos
+        clearDataBtn.addEventListener('click', function() {
+            if (pesajesData.length === 0) {
+                showStatus('warning', 'No hay datos para limpiar.');
+                return;
+            }
+            
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: `Se eliminarán ${pesajesData.length} registros de pesaje. Esta acción no se puede deshacer.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    clearScreen();
+                }
+            });
+        });
+        
+        // Guardar datos en Supabase
+        async function saveDataToSupabase() {
+            if (pesajesData.length === 0) {
+                showStatus('warning', 'No hay datos para guardar.');
+                return;
+            }
+            
+            loadingIndicator.style.display = 'block';
+            saveToSupabaseBtn.disabled = true;
+            showStatus('info', 'Preparando datos para guardar en Supabase...');
+            
+            try {
+                let successCount = 0;
+                let duplicateCount = 0;
+                let errorCount = 0;
+                
+                // Procesar cada registro individualmente
+                for (const pesaje of pesajesData) {
+                    try {
+                        // Verificar si el registro ya existe en Supabase
+                        const existsResponse = await fetch(
+                            `${SUPABASE_URL}/rest/v1/pesajes?numero_pesaje=eq.${encodeURIComponent(pesaje.numeroPesaje || '')}&select=numero_pesaje`,
+                            {
+                                headers: {
+                                    'apikey': SUPABASE_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                                }
+                            }
+                        );
+                        
+                        if (!existsResponse.ok) {
+                            throw new Error(`Error al verificar registro: ${existsResponse.status}`);
+                        }
+                        
+                        const existingData = await existsResponse.json();
+                        
+                        if (existingData.length > 0) {
+                            duplicateCount++;
+                            continue;
+                        }
+                        
+                        // Preparar datos para Supabase
+                        const pesajeData = {
+                            base: pesaje.base || null,
+                            bascula_tara: pesaje.basculaTara || null,
+                            tipo_bascula_tara: pesaje.tipoBasculaTara || null,
+                            bascula_pcomercial: pesaje.basculaPComercial || null,
+                            tipo_bascula_pcomercial: pesaje.tipoBasculaPComercial || null,
+                            numero_pesaje: pesaje.numeroPesaje || null,
+                            numero_pesaje_ejes: pesaje.numeroPesajeEjes || null,
+                            patente: pesaje.patente || null,
+                            patente_acoplado: pesaje.patenteAcoplado || null,
+                            codigo_tipo_acoplado: pesaje.codigoTipoAcoplado || null,
+                            descripcion_tipo_acoplado: pesaje.descripcionTipoAcoplado || null,
+                            id_transportista: pesaje.idTransportista || null,
+                            transportista: pesaje.transportista || null,
+                            chofer_tara: pesaje.choferTara || null,
+                            chofer_pcomercial: pesaje.choferPComercial || null,
+                            observaciones_tara: pesaje.observacionesTara || null,
+                            observaciones_pcomercial: pesaje.observacionesPComercial || null,
+                            fecha_hora_tara: pesaje.fechaHoraTara ? new Date(pesaje.fechaHoraTara).toISOString() : null,
+                            fecha_hora_pcomercial: pesaje.fechaHoraPComercial ? new Date(pesaje.fechaHoraPComercial).toISOString() : null,
+                            tipo_camion: pesaje.tipoCamion || null,
+                            codigo_tipo_carga: pesaje.codigoTipoCarga || null,
+                            tipo_carga: pesaje.tipoCarga || null,
+                            tara: pesaje.tara || null,
+                            peso_bruto_total: pesaje.pesoBrutoTotal || null,
+                            peso_bruto_comercial: pesaje.pesoBrutoComercial || null,
+                            peso_neto: pesaje.pesoNeto || null,
+                            peso_neto_informado: pesaje.pesoNetoInformado || null,
+                            ciclo: pesaje.ciclo || null,
+                            operador_tara: pesaje.operadorTara || null,
+                            operador_pcomercial: pesaje.operadorPComercial || null,
+                            motivo_correccion: pesaje.motivoCorreccion || null,
+                            factor_correccion_peso_neto: pesaje.factorCorreccionPesoNeto || null,
+                            motivo_anulacion: pesaje.motivoAnulacion || null,
+                            rut_origen: pesaje.rutOrigen || null,
+                            razon_social_origen: pesaje.razonSocialOrigen || null,
+                            codigo_sucursal_origen: pesaje.codigoSucursalOrigen || null,
+                            nombre_sucursal_origen: pesaje.nombreSucursalOrigen || null,
+                            comuna_sucursal_origen: pesaje.comunaSucursalOrigen || null,
+                            rut_destino: pesaje.rutDestino || null,
+                            razon_social_destino: pesaje.razonSocialDestino || null,
+                            codigo_sucursal_destino: pesaje.codigoSucursalDestino || null,
+                            nombre_sucursal_destino: pesaje.nombreSucursalDestino || null,
+                            comuna_sucursal_destino: pesaje.comunaSucursalDestino || null,
+                            tipo_documento: pesaje.tipoDocumento || null,
+                            numero_documento: pesaje.numeroDocumento || null,
+                            fecha_documento: pesaje.fechaDocumento ? new Date(pesaje.fechaDocumento).toISOString() : null,
+                            codigo_producto: pesaje.codigoProducto || null,
+                            nombre_producto: pesaje.nombreProducto || null,
+                            cantidad_producto: pesaje.cantidadProducto || null,
+                            peso_informado_producto: pesaje.pesoInformadoProducto || null,
+                            codigo_envase_com: pesaje.codigoEnvaseCom || null,
+                            nombre_envase_com: pesaje.nombreEnvaseCom || null,
+                            cantidad_envases_com: pesaje.cantidadEnvasesCom || null,
+                            tara_envase_com: pesaje.taraEnvaseCom || null,
+                            cantidad_dig: pesaje.cantidadDig || null,
+                            envase: pesaje.envase || null,
+                            giro_dig: pesaje.giroDig || null,
+                            numero_lote: pesaje.numeroLote || null,
+                            maxisacos: pesaje.maxisacos || null,
+                            sellos: pesaje.sellos || null,
+                            empresa: pesaje.empresa || null,
+                            kgs: pesaje.kgs || null,
+                            patente3: pesaje.patente3 || null,
+                            pesbruto: pesaje.pesbruto || null,
+                            pesneto: pesaje.pesneto || null,
+                            pestara: pesaje.pestara || null,
+                            referencia: pesaje.referencia || null,
+                            traslado: pesaje.traslado || null,
+                            codigo_envase_tara: pesaje.codigoEnvaseTara || null,
+                            nombre_envase_tara: pesaje.nombreEnvaseTara || null,
+                            cantidad_envases_tara: pesaje.cantidadEnvasesTara || null,
+                            tara_envase_tara: pesaje.taraEnvaseTara || null,
+                            tara_envases_tara: pesaje.taraEnvasesTara || null,
+                            created_at: new Date().toISOString()
+                        };
+                        
+                        // Insertar en Supabase
+                        const insertResponse = await fetch(`${SUPABASE_URL}/rest/v1/pesajes`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                'Prefer': 'return=minimal'
+                            },
+                            body: JSON.stringify(pesajeData)
+                        });
+                        
+                        if (!insertResponse.ok) {
+                            throw new Error(`Error ${insertResponse.status}: ${insertResponse.statusText}`);
+                        }
+                        
+                        successCount++;
+                        
+                        // Actualizar estado cada 10 registros
+                        if (successCount % 10 === 0) {
+                            showStatus('success', `Guardando datos... ${successCount} registros guardados, ${duplicateCount} duplicados.`);
+                        }
+                    } catch (error) {
+                        console.error(`Error al guardar registro ${pesaje.numeroPesaje}:`, error);
+                        errorCount++;
+                    }
+                }
+                
+                // Mostrar resumen final
+                let message = `Proceso completado. `;
+                message += `Registros guardados: ${successCount}. `;
+                message += `Registros duplicados (no guardados): ${duplicateCount}. `;
+                
+                if (errorCount > 0) {
+                    message += `Errores: ${errorCount}.`;
+                    showStatus('error', message);
+                } else {
+                    showStatus('success', message);
+                }
+                
+                // Limpiar pantalla después de guardar
+                clearScreen();
+                
+                if (successCount > 0) {
+                    Swal.fire(
+                        '¡Éxito!',
+                        `Se guardaron ${successCount} registros en Supabase.`,
+                        'success'
+                    );
+                }
+            } catch (error) {
+                showStatus('error', 'Error general al guardar datos: ' + error.message);
+                console.error('Error general:', error);
+            } finally {
+                loadingIndicator.style.display = 'none';
+                saveToSupabaseBtn.disabled = false;
+            }
+        }
+
+        // Evento para guardar en Supabase
+        saveToSupabaseBtn.addEventListener('click', async function() {
+            Swal.fire({
+                title: 'Confirmar Guardado',
+                text: `¿Estás seguro de guardar ${pesajesData.length} registros en Supabase?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    saveDataToSupabase();
+                }
+            });
+        });
+
+        // Botón Volver
+        backBtn.addEventListener('click', function() {
+            window.location.href = 'registro-pesaje.html';
+        });
+
+        // Botón Revisar Pesajes
+        reviewBtn.addEventListener('click', function() {
+            window.location.href = 'pesajes.html';
+        });
+        
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedData = localStorage.getItem('pesajesData');
+            if (savedData) {
+                pesajesData = JSON.parse(savedData);
+                updateTable();
+                updateSummary();
+                showStatus('info', `Datos cargados desde el almacenamiento local. ${pesajesData.length} registros disponibles.`);
+            }
+        });
+    </script>
+</body>
+</html>
