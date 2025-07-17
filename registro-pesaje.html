@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Pesaje</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #5c6bc0;
+            --secondary-color: #3949ab;
+            --accent-color: #7986cb;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 95%;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--box-shadow);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 500;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background-color: var(--warning-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #d3165e;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #3aa8d8;
+        }
+
+        .btn-sm {
+            padding: 0.3rem 0.7rem;
+            font-size: 0.9rem;
+        }
+
+        .table-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1500px;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .info-text {
+            color: #6c757d;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+
+        .file-input-container {
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 0.7rem 1.5rem;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background-color: #3aa8d8;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            color: var(--dark-color);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .password-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .password-modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        /* Nuevos estilos para las mejoras */
+        .summary-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1rem;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .summary-card h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .summary-card p {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .destinatarios-container, .transportistas-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .destinatarios-list, .transportistas-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .destinatario-tag, .transportista-tag {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .scroll-top-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background-color: var(--primary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: var(--box-shadow);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 999;
+        }
+
+        .scroll-top-btn.visible {
+            opacity: 1;
+        }
+
+        .btn-export {
+            background-color: #4caf50;
+        }
+
+        .btn-export:hover {
+            background-color: #3e8e41;
+        }
+
+        .btn-back {
+            position: absolute;
+            left: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--secondary-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                max-width: 100%;
+                padding: 0 0.5rem;
+            }
+            
+            .file-input-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            th, td {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .btn-back {
+                position: static;
+                transform: none;
+                margin-bottom: 1rem;
+                width: 100%;
+            }
+
+            header {
+                padding-top: 4rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <button class="btn btn-back" onclick="window.location.href='index.html'">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <h1>Registro de Pesaje</span></h1>
+        </header>
+
+        <div class="file-input-container">
+            <label for="excelFile" class="file-input-label">
+                <i class="fas fa-file-excel"></i> Cargar Excel
+            </label>
+            <span id="fileName" class="file-name">No se ha seleccionado archivo</span>
+            <input type="file" id="excelFile" class="file-input" accept=".xlsx, .xls, .csv">
+            <button class="btn btn-danger" id="clearData">
+                <i class="fas fa-trash"></i> Limpiar Todo
+            </button>
+            <button class="btn btn-export" id="exportExcel">
+                <i class="fas fa-download"></i> Exportar Excel
+            </button>
+        </div>
+
+        <!-- Resumen de datos -->
+        <div class="summary-container">
+            <div class="summary-card">
+                <h3>Registros Totales</h3>
+                <p id="totalRegistros">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Total Peso Neto</h3>
+                <p id="totalPesoNeto">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Total Sellos</h3>
+                <p id="totalSellos">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Transportistas</h3>
+                <p id="totalTransportistas">0</p>
+            </div>
+            <div class="summary-card">
+                <h3>Destinatarios</h3>
+                <p id="totalDestinatarios">0</p>
+            </div>
+        </div>
+
+        <!-- Listado de destinatarios -->
+        <div class="destinatarios-container">
+            <h3>Destinatarios</h3>
+            <div class="destinatarios-list" id="destinatariosList">
+                <span class="destinatario-tag">No hay datos</span>
+            </div>
+        </div>
+
+        <!-- Listado de transportistas -->
+        <div class="transportistas-container">
+            <h3>Transportistas</h3>
+            <div class="transportistas-list" id="transportistasList">
+                <span class="transportista-tag">No hay datos</span>
+            </div>
+        </div>
+
+        <!-- Tabla de registros de pesaje -->
+        <div class="table-container">
+            <table id="pesajeTable">
+                <thead>
+                    <tr>
+                        <th>Base</th>
+                        <th>Báscula Tara</th>
+                        <th>Tipo Báscula Tara</th>
+                        <th>Báscula P.Comercial</th>
+                        <th>Tipo Báscula P.Comercial</th>
+                        <th>N° Pesaje</th>
+                        <th>N° Pesaje Ejes</th>
+                        <th>Patente</th>
+                        <th>Patente Acoplado</th>
+                        <th>Código Tipo Acoplado</th>
+                        <th>Descr. Tipo Acoplado</th>
+                        <th>ID Transportista</th>
+                        <th>Transportista</th>
+                        <th>Chofer Tara</th>
+                        <th>Chofer P.Comercial</th>
+                        <th>Observaciones Tara</th>
+                        <th>Observaciones P.Comercial</th>
+                        <th>Fecha Hora Tara</th>
+                        <th>Fecha Hora P.Comercial</th>
+                        <th>Tipo Camión</th>
+                        <th>Código Tipo Carga</th>
+                        <th>Tipo Carga</th>
+                        <th>Tara</th>
+                        <th>Peso Bruto Total</th>
+                        <th>Peso Bruto Comercial</th>
+                        <th>Peso Neto</th>
+                        <th>Peso Neto Informado</th>
+                        <th>Ciclo</th>
+                        <th>Operador Tara</th>
+                        <th>Operador P.Comercial</th>
+                        <th>Motivo corrección</th>
+                        <th>Factor corrección peso neto</th>
+                        <th>Motivo Anulación</th>
+                        <th>Rut Origen</th>
+                        <th>Razón Social Origen</th>
+                        <th>Código Sucursal Origen</th>
+                        <th>Nombre Sucursal Origen</th>
+                        <th>Comuna Sucursal Origen</th>
+                        <th>Rut Destino</th>
+                        <th>Razon Social Destino</th>
+                        <th>Código Sucursal Destino</th>
+                        <th>Nombre Sucursal Destino</th>
+                        <th>Comuna Sucursal Destino</th>
+                        <th>Tipo Documento</th>
+                        <th>N° Documento</th>
+                        <th>Fecha Documento</th>
+                        <th>Código Producto</th>
+                        <th>Nombre Producto</th>
+                        <th>Cant. Producto</th>
+                        <th>Peso Infor. Producto</th>
+                        <th>Código Envase (Com.)</th>
+                        <th>Nombre Envase (Com.)</th>
+                        <th>Cant. Envases (Com.)</th>
+                        <th>Tara Envase (Com.)</th>
+                        <th>CANTIDAD DIG</th>
+                        <th>ENVASE</th>
+                        <th>GIRO DIG</th>
+                        <th>N° DE LOTE</th>
+                        <th>MAXISACOS</th>
+                        <th>SELLOS</th>
+                        <th>EMPRESA</th>
+                        <th>KGS</th>
+                        <th>PATENTE3</th>
+                        <th>PESBRUTO</th>
+                        <th>PESNETO</th>
+                        <th>PESTARA</th>
+                        <th>REFERENCIA</th>
+                        <th>SELLOS</th>
+                        <th>TRASLADO</th>
+                        <th>Código Envase (Tara)</th>
+                        <th>Nombre Envase (Tara)</th>
+                        <th>Cant. Envases (Tara)</th>
+                        <th>Tara Envase (Tara)</th>
+                        <th>Tara Envases (Tara)</th>
+                    </tr>
+                </thead>
+                <tbody id="pesajeTableBody">
+                    <tr>
+                        <td colspan="68" style="text-align: center;">No hay datos disponibles. Cargue un archivo Excel.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="info-text">Detalle completo de registros de pesaje</p>
+    </div>
+
+    <!-- Botón para ir al principio -->
+    <div class="scroll-top-btn" id="scrollTopBtn">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+
+    <!-- Modal para contraseña -->
+    <div class="password-modal" id="passwordModal">
+        <div class="password-modal-content">
+            <h2>Confirmar eliminación</h2>
+            <p>Ingrese la contraseña para eliminar todos los datos:</p>
+            <input type="password" id="passwordInput" class="password-input" placeholder="Contraseña">
+            <div class="modal-buttons">
+                <button class="btn" id="cancelDelete">Cancelar</button>
+                <button class="btn btn-danger" id="confirmDelete">Eliminar</button>
+            </div>
+            <p id="passwordError" style="color: var(--warning-color); margin-top: 1rem; display: none;">Contraseña incorrecta. Intente nuevamente.</p>
+        </div>
+    </div>
+
+    <script>
+        // Datos en memoria
+        let pesajeData = [];
+        
+        // Elementos del DOM
+        const excelFileInput = document.getElementById('excelFile');
+        const fileNameSpan = document.getElementById('fileName');
+        const clearDataBtn = document.getElementById('clearData');
+        const exportExcelBtn = document.getElementById('exportExcel');
+        const pesajeTableBody = document.getElementById('pesajeTableBody');
+        const fechaCierreSpan = document.getElementById('fechaCierre');
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const cancelDeleteBtn = document.getElementById('cancelDelete');
+        const confirmDeleteBtn = document.getElementById('confirmDelete');
+        const passwordError = document.getElementById('passwordError');
+        const totalRegistrosSpan = document.getElementById('totalRegistros');
+        const totalPesoNetoSpan = document.getElementById('totalPesoNeto');
+        const totalSellosSpan = document.getElementById('totalSellos');
+        const totalTransportistasSpan = document.getElementById('totalTransportistas');
+        const totalDestinatariosSpan = document.getElementById('totalDestinatarios');
+        const destinatariosList = document.getElementById('destinatariosList');
+        const transportistasList = document.getElementById('transportistasList');
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+        // Contraseña para eliminar datos
+        const DELETE_PASSWORD = "230304";
+
+        // Formatear fecha y hora (10/07/2025 04:36)
+        function formatFechaHora(fecha) {
+            if (!fecha) return '-';
+            
+            let dateObj;
+            
+            // Si es un objeto Date
+            if (fecha instanceof Date) {
+                dateObj = fecha;
+            } 
+            // Si es un string ISO (de Excel)
+            else if (typeof fecha === 'string' && fecha.includes('T')) {
+                dateObj = new Date(fecha);
+            }
+            // Si es un número (serial de Excel)
+            else if (typeof fecha === 'number') {
+                // Convertir serial de Excel a fecha
+                dateObj = new Date((fecha - (25567 + 2)) * 86400 * 1000);
+            }
+            // Si ya está en formato string pero no es ISO
+            else {
+                // Intentar parsear como fecha
+                dateObj = new Date(fecha);
+                if (isNaN(dateObj.getTime())) {
+                    return fecha; // Si no se puede parsear, devolver el valor original
+                }
+            }
+            
+            // Formatear como DD/MM/YYYY HH:MM con ceros a la izquierda
+            const dia = dateObj.getDate().toString().padStart(2, '0');
+            const mes = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+            const año = dateObj.getFullYear();
+            const horas = dateObj.getHours().toString().padStart(2, '0');
+            const minutos = dateObj.getMinutes().toString().padStart(2, '0');
+            
+            return `${dia}/${mes}/${año} ${horas}:${minutos}`;
+        }
+
+        // Función para contar sellos en CANTIDAD DIG (cada número cuenta como 1)
+        function contarSellos(sellosStr) {
+            if (!sellosStr || sellosStr === '-' || sellosStr === '') return 0;
+            
+            // Extraer todos los números del string
+            const numeros = sellosStr.toString().match(/\d+/g);
+            return numeros ? numeros.length : 0;
+        }
+
+        // Actualizar resumen de datos
+        function updateSummary() {
+            const total = pesajeData.length;
+            
+            let totalSellos = 0;
+            let totalPesoNeto = 0;
+            
+            pesajeData.forEach(registro => {
+                // Contar sellos en CANTIDAD DIG
+                totalSellos += contarSellos(registro['CANTIDAD DIG']);
+                
+                // Sumar peso neto si es un número
+                if (registro['Peso Neto'] && !isNaN(registro['Peso Neto'])) {
+                    totalPesoNeto += Number(registro['Peso Neto']);
+                }
+            });
+            
+            // Actualizar destinatarios y transportistas
+            updateDestinatarios();
+            updateTransportistas();
+            
+            totalRegistrosSpan.textContent = total;
+            totalPesoNetoSpan.textContent = totalPesoNeto.toFixed(2);
+            totalSellosSpan.textContent = totalSellos;
+        }
+
+        // Actualizar listado de destinatarios
+        function updateDestinatarios() {
+            const destinatarios = {};
+            
+            pesajeData.forEach(registro => {
+                const key = registro['Razon Social Destino'] || registro['RazonSocialDestino'] || '';
+                if (key && key !== '-') {
+                    destinatarios[key] = (destinatarios[key] || 0) + 1;
+                }
+            });
+            
+            const destinatariosArray = Object.entries(destinatarios).sort((a, b) => b[1] - a[1]);
+            
+            if (destinatariosArray.length === 0) {
+                destinatariosList.innerHTML = '<span class="destinatario-tag">No hay datos</span>';
+                totalDestinatariosSpan.textContent = '0';
+                return;
+            }
+            
+            let html = '';
+            destinatariosArray.forEach(([destinatario, count]) => {
+                html += `<span class="destinatario-tag" title="${count} registro(s)">${destinatario} (${count})</span>`;
+            });
+            
+            destinatariosList.innerHTML = html;
+            totalDestinatariosSpan.textContent = destinatariosArray.length;
+        }
+
+        // Actualizar listado de transportistas
+        function updateTransportistas() {
+            const transportistas = {};
+            
+            pesajeData.forEach(registro => {
+                const key = registro['Transportista'] || '';
+                if (key && key !== '-') {
+                    transportistas[key] = (transportistas[key] || 0) + 1;
+                }
+            });
+            
+            const transportistasArray = Object.entries(transportistas).sort((a, b) => b[1] - a[1]);
+            
+            if (transportistasArray.length === 0) {
+                transportistasList.innerHTML = '<span class="transportista-tag">No hay datos</span>';
+                totalTransportistasSpan.textContent = '0';
+                return;
+            }
+            
+            let html = '';
+            transportistasArray.forEach(([transportista, count]) => {
+                html += `<span class="transportista-tag" title="${count} registro(s)">${transportista} (${count})</span>`;
+            });
+            
+            transportistasList.innerHTML = html;
+            totalTransportistasSpan.textContent = transportistasArray.length;
+        }
+
+        // Cargar datos desde Excel
+        excelFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            fileNameSpan.textContent = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Tomar la primera hoja
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Convertir a JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                // Procesar los datos
+                const nuevosDatos = jsonData.map(item => {
+                    // Mapear todas las columnas posibles
+                    const registro = {};
+                    
+                    // Mapeo de campos principales
+                    registro.id = Date.now() + Math.random().toString(36).substr(2, 9); // ID único
+                    
+                    // Mapear todas las columnas del Excel a las propiedades del registro
+                    for (const key in item) {
+                        registro[key] = item[key] !== undefined ? item[key] : '-';
+                    }
+                    
+                    return registro;
+                });
+                
+                // Agregar a los datos existentes (no reemplazar)
+                pesajeData = [...pesajeData, ...nuevosDatos];
+                
+                // Actualizar la tabla y resumen
+                updateTable();
+                updateSummary();
+                
+                // Guardar en localStorage
+                localStorage.setItem('pesajeData', JSON.stringify(pesajeData));
+                
+                // Actualizar fecha de cierre
+                updateFechaCierre();
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Mostrar modal para confirmar eliminación con contraseña
+        clearDataBtn.addEventListener('click', function() {
+            if (pesajeData.length === 0) {
+                alert('No hay datos para eliminar.');
+                return;
+            }
+            
+            passwordModal.style.display = 'flex';
+            passwordInput.value = '';
+            passwordError.style.display = 'none';
+        });
+
+        // Cancelar eliminación
+        cancelDeleteBtn.addEventListener('click', function() {
+            passwordModal.style.display = 'none';
+        });
+
+        // Confirmar eliminación con contraseña
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (passwordInput.value === DELETE_PASSWORD) {
+                // Eliminar todos los datos
+                pesajeData = [];
+                updateTable();
+                updateSummary();
+                localStorage.removeItem('pesajeData');
+                excelFileInput.value = '';
+                fileNameSpan.textContent = 'No se ha seleccionado archivo';
+                fechaCierreSpan.textContent = new Date().toLocaleDateString('es-ES');
+                
+                // Cerrar modal
+                passwordModal.style.display = 'none';
+            } else {
+                // Mostrar error de contraseña
+                passwordError.style.display = 'block';
+            }
+        });
+
+        // Actualizar tabla
+        function updateTable() {
+            if (pesajeData.length === 0) {
+                pesajeTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="68" style="text-align: center;">No hay datos disponibles. Cargue un archivo Excel.</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let tableHTML = '';
+            pesajeData.forEach(registro => {
+                tableHTML += `
+                    <tr>
+                        <td>${registro.Base || '-'}</td>
+                        <td>${registro['Báscula Tara'] || registro['BásculaTara'] || '-'}</td>
+                        <td>${registro['Tipo Báscula Tara'] || registro['TipoBásculaTara'] || '-'}</td>
+                        <td>${registro['Báscula P.Comercial'] || registro['BásculaPComercial'] || '-'}</td>
+                        <td>${registro['Tipo Báscula P.Comercial'] || registro['TipoBásculaPComercial'] || '-'}</td>
+                        <td>${registro['N° Pesaje'] || registro['N°Pesaje'] || registro.NumeroPesaje || '-'}</td>
+                        <td>${registro['N° Pesaje Ejes'] || registro['N°PesajeEjes'] || registro.NumeroPesajeEjes || '-'}</td>
+                        <td>${registro.Patente || '-'}</td>
+                        <td>${registro['Patente Acoplado'] || registro.PatenteAcoplado || '-'}</td>
+                        <td>${registro['Código Tipo Acoplado'] || registro.CódigoTipoAcoplado || '-'}</td>
+                        <td>${registro['Descr. Tipo Acoplado'] || registro.DescripcionTipoAcoplado || '-'}</td>
+                        <td>${registro['ID Transportista'] || registro.IDTransportista || '-'}</td>
+                        <td>${registro.Transportista || '-'}</td>
+                        <td>${registro['Chofer Tara'] || registro.ChoferTara || '-'}</td>
+                        <td>${registro['Chofer P.Comercial'] || registro.ChoferPComercial || '-'}</td>
+                        <td>${registro['Observaciones Tara'] || registro.ObservacionesTara || '-'}</td>
+                        <td>${registro['Observaciones P.Comercial'] || registro.ObservacionesPComercial || '-'}</td>
+                        <td>${formatFechaHora(registro['Fecha Hora Tara'] || registro.FechaHoraTara)}</td>
+                        <td>${formatFechaHora(registro['Fecha Hora P.Comercial'] || registro.FechaHoraPComercial)}</td>
+                        <td>${registro['Tipo Camión'] || registro.TipoCamión || '-'}</td>
+                        <td>${registro['Código Tipo Carga'] || registro.CódigoTipoCarga || '-'}</td>
+                        <td>${registro['Tipo Carga'] || registro.TipoCarga || '-'}</td>
+                        <td>${registro.Tara || '-'}</td>
+                        <td>${registro['Peso Bruto Total'] || registro.PesoBrutoTotal || '-'}</td>
+                        <td>${registro['Peso Bruto Comercial'] || registro.PesoBrutoComercial || '-'}</td>
+                        <td>${registro['Peso Neto'] || registro.PesoNeto || '-'}</td>
+                        <td>${registro['Peso Neto Informado'] || registro.PesoNetoInformado || '-'}</td>
+                        <td>${registro.Ciclo || '-'}</td>
+                        <td>${registro['Operador Tara'] || registro.OperadorTara || '-'}</td>
+                        <td>${registro['Operador P.Comercial'] || registro.OperadorPComercial || '-'}</td>
+                        <td>${registro['Motivo corrección'] || registro.MotivoCorrección || '-'}</td>
+                        <td>${registro['Factor corrección peso neto'] || registro.FactorCorrecciónPesoNeto || '-'}</td>
+                        <td>${registro['Motivo Anulación'] || registro.MotivoAnulación || '-'}</td>
+                        <td>${registro['Rut Origen'] || registro.RutOrigen || '-'}</td>
+                        <td>${registro['Razón Social Origen'] || registro.RazónSocialOrigen || '-'}</td>
+                        <td>${registro['Código Sucursal Origen'] || registro.CódigoSucursalOrigen || '-'}</td>
+                        <td>${registro['Nombre Sucursal Origen'] || registro.NombreSucursalOrigen || '-'}</td>
+                        <td>${registro['Comuna Sucursal Origen'] || registro.ComunaSucursalOrigen || '-'}</td>
+                        <td>${registro['Rut Destino'] || registro.RutDestino || '-'}</td>
+                        <td>${registro['Razon Social Destino'] || registro.RazonSocialDestino || '-'}</td>
+                        <td>${registro['Código Sucursal Destino'] || registro.CódigoSucursalDestino || '-'}</td>
+                        <td>${registro['Nombre Sucursal Destino'] || registro.NombreSucursalDestino || '-'}</td>
+                        <td>${registro['Comuna Sucursal Destino'] || registro.ComunaSucursalDestino || '-'}</td>
+                        <td>${registro['Tipo Documento'] || registro.TipoDocumento || '-'}</td>
+                        <td>${registro['N° Documento'] || registro['N°Documento'] || registro.NumeroDocumento || '-'}</td>
+                        <td>${formatFechaHora(registro['Fecha Documento'] || registro.FechaDocumento)}</td>
+                        <td>${registro['Código Producto'] || registro.CódigoProducto || '-'}</td>
+                        <td>${registro['Nombre Producto'] || registro.NombreProducto || '-'}</td>
+                        <td>${registro['Cant. Producto'] || registro.CantProducto || '-'}</td>
+                        <td>${registro['Peso Infor. Producto'] || registro.PesoInformadoProducto || '-'}</td>
+                        <td>${registro['Código Envase (Com.)'] || registro['CódigoEnvaseCom'] || '-'}</td>
+                        <td>${registro['Nombre Envase (Com.)'] || registro['NombreEnvaseCom'] || '-'}</td>
+                        <td>${registro['Cant. Envases (Com.)'] || registro['CantEnvasesCom'] || '-'}</td>
+                        <td>${registro['Tara Envase (Com.)'] || registro['TaraEnvaseCom'] || '-'}</td>
+                        <td>${registro['CANTIDAD DIG'] || '-'}</td>
+                        <td>${registro['ENVASE'] || '-'}</td>
+                        <td>${registro['GIRO DIG'] || '-'}</td>
+                        <td>${registro['N° DE LOTE'] || registro['N°DeLote'] || '-'}</td>
+                        <td>${registro['MAXISACOS'] || '-'}</td>
+                        <td>${registro['SELLOS'] || '-'}</td>
+                        <td>${registro['EMPRESA'] || '-'}</td>
+                        <td>${registro['KGS'] || '-'}</td>
+                        <td>${registro['PATENTE3'] || '-'}</td>
+                        <td>${registro['PESBRUTO'] || '-'}</td>
+                        <td>${registro['PESNETO'] || '-'}</td>
+                        <td>${registro['PESTARA'] || '-'}</td>
+                        <td>${registro['REFERENCIA'] || '-'}</td>
+                        <td>${registro['SELLOS'] || '-'}</td>
+                        <td>${registro['TRASLADO'] || '-'}</td>
+                        <td>${registro['Código Envase (Tara)'] || registro['CódigoEnvaseTara'] || '-'}</td>
+                        <td>${registro['Nombre Envase (Tara)'] || registro['NombreEnvaseTara'] || '-'}</td>
+                        <td>${registro['Cant. Envases (Tara)'] || registro['CantEnvasesTara'] || '-'}</td>
+                        <td>${registro['Tara Envase (Tara)'] || registro['TaraEnvaseTara'] || '-'}</td>
+                        <td>${registro['Tara Envases (Tara)'] || registro['TaraEnvasesTara'] || '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            pesajeTableBody.innerHTML = tableHTML;
+        }
+
+        // Actualizar fecha de cierre
+        function updateFechaCierre() {
+            if (pesajeData.length > 0) {
+                // Usar la fecha más reciente de Fecha Hora P.Comercial
+                const ultimaFecha = pesajeData.reduce((latest, current) => {
+                    try {
+                        const currentDate = new Date(current['Fecha Hora P.Comercial'] || current['FechaHoraPComercial']);
+                        return currentDate > latest ? currentDate : latest;
+                    } catch {
+                        return latest;
+                    }
+                }, new Date(0));
+                
+                if (ultimaFecha.getTime() > 0) {
+                    fechaCierreSpan.textContent = ultimaFecha.toLocaleDateString('es-ES');
+                    return;
+                }
+            }
+            fechaCierreSpan.textContent = new Date().toLocaleDateString('es-ES');
+        }
+
+        // Exportar a Excel
+        exportExcelBtn.addEventListener('click', function() {
+            if (pesajeData.length === 0) {
+                alert('No hay datos para exportar.');
+                return;
+            }
+
+            // Preparar los datos para exportar
+            const dataToExport = pesajeData.map(registro => {
+                const row = {};
+                
+                // Mapear todas las columnas
+                const columns = [
+                    'Base', 'Báscula Tara', 'Tipo Báscula Tara', 'Báscula P.Comercial', 'Tipo Báscula P.Comercial',
+                    'N° Pesaje', 'N° Pesaje Ejes', 'Patente', 'Patente Acoplado', 'Código Tipo Acoplado',
+                    'Descr. Tipo Acoplado', 'ID Transportista', 'Transportista', 'Chofer Tara', 'Chofer P.Comercial',
+                    'Observaciones Tara', 'Observaciones P.Comercial', 'Fecha Hora Tara', 'Fecha Hora P.Comercial',
+                    'Tipo Camión', 'Código Tipo Carga', 'Tipo Carga', 'Tara', 'Peso Bruto Total', 'Peso Bruto Comercial',
+                    'Peso Neto', 'Peso Neto Informado', 'Ciclo', 'Operador Tara', 'Operador P.Comercial',
+                    'Motivo corrección', 'Factor corrección peso neto', 'Motivo Anulación', 'Rut Origen',
+                    'Razón Social Origen', 'Código Sucursal Origen', 'Nombre Sucursal Origen', 'Comuna Sucursal Origen',
+                    'Rut Destino', 'Razon Social Destino', 'Código Sucursal Destino', 'Nombre Sucursal Destino',
+                    'Comuna Sucursal Destino', 'Tipo Documento', 'N° Documento', 'Fecha Documento', 'Código Producto',
+                    'Nombre Producto', 'Cant. Producto', 'Peso Infor. Producto', 'Código Envase (Com.)',
+                    'Nombre Envase (Com.)', 'Cant. Envases (Com.)', 'Tara Envase (Com.)', 'CANTIDAD DIG',
+                    'ENVASE', 'GIRO DIG', 'N° DE LOTE', 'MAXISACOS', 'SELLOS', 'EMPRESA', 'KGS', 'PATENTE3',
+                    'PESBRUTO', 'PESNETO', 'PESTARA', 'REFERENCIA', 'SELLOS', 'TRASLADO', 'Código Envase (Tara)',
+                    'Nombre Envase (Tara)', 'Cant. Envases (Tara)', 'Tara Envase (Tara)', 'Tara Envases (Tara)'
+                ];
+                
+                columns.forEach(col => {
+                    // Formatear fechas especiales
+                    if (col === 'Fecha Hora Tara' || col === 'Fecha Hora P.Comercial' || col === 'Fecha Documento') {
+                        const fecha = registro[col] || registro[col.replace(/ /g, '')] || '-';
+                        row[col] = formatFechaHora(fecha);
+                    } else {
+                        row[col] = registro[col] || '-';
+                    }
+                });
+                
+                return row;
+            });
+
+            // Crear hoja de trabajo
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            
+            // Crear libro de trabajo
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Registro Pesaje");
+            
+            // Generar archivo Excel
+            const fechaExportacion = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            XLSX.writeFile(wb, `Registro_Pesaje_${fechaExportacion}.xlsx`);
+        });
+
+        // Mostrar/ocultar botón de scroll
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        });
+
+        // Ir al principio al hacer clic en el botón
+        scrollTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedData = localStorage.getItem('pesajeData');
+            if (savedData) {
+                pesajeData = JSON.parse(savedData);
+                updateTable();
+                updateSummary();
+                updateFechaCierre();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guías de Despacho - MVC-CONTOPSA</title>
+    <title>Guías de Despacho</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -18,6 +18,7 @@
             --warning-color: #f72585;
             --border-radius: 8px;
             --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --volver-color: #5c6bc0;
         }
 
         * {
@@ -48,6 +49,7 @@
             box-shadow: var(--box-shadow);
             background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
             text-align: center;
+            position: relative;
         }
 
         h1 {
@@ -87,6 +89,18 @@
 
         .btn-success:hover {
             background-color: #3aa8d8;
+        }
+
+        .btn-volver {
+            background-color: var(--volver-color);
+            position: absolute;
+            left: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .btn-volver:hover {
+            background-color: #5a6268;
         }
 
         .btn-sm {
@@ -236,24 +250,26 @@
             font-weight: 500;
         }
 
-        .date-filter-container {
+        /* Nuevos estilos para los filtros */
+        .filter-container {
             display: flex;
             gap: 1rem;
             margin-bottom: 1.5rem;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .date-filter {
+        .filter-group {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        .date-filter label {
+        .filter-group label {
             font-weight: 500;
         }
 
-        .date-filter input {
+        .filter-group input, .filter-group select {
             padding: 0.5rem;
             border: 1px solid #ddd;
             border-radius: var(--border-radius);
@@ -329,16 +345,35 @@
                 font-size: 0.9rem;
             }
 
-            .date-filter-container {
+            .filter-container {
                 flex-direction: column;
+                align-items: flex-start;
             }
 
-            .date-filter {
+            .filter-group {
                 width: 100%;
             }
 
-            .date-filter input {
+            .filter-group input, .filter-group select {
                 flex: 1;
+                width: 100%;
+            }
+
+            .btn-volver {
+                position: static;
+                transform: none;
+                margin-bottom: 1rem;
+                width: 100%;
+            }
+
+            header {
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            h1 {
+                margin-bottom: 1rem;
             }
         }
     </style>
@@ -346,7 +381,10 @@
 <body>
     <div class="container">
         <header>
-            <h1>Guías de Despacho - <span id="fechaCierre"></span></h1>
+            <button class="btn btn-volver" id="volverBtn">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <h1>Guías de Despacho</span></h1>
         </header>
 
         <div class="file-input-container">
@@ -363,16 +401,22 @@
             </button>
         </div>
 
-        <!-- Filtros por fecha -->
-        <div class="date-filter-container">
-            <div class="date-filter">
-                <label for="fechaDesde">Desde:</label>
-                <input type="date" id="fechaDesde">
+        <!-- Filtros por Nro Guía y Estado -->
+        <div class="filter-container">
+            <div class="filter-group">
+                <label for="filtroNumeroGuia">Nro Guía:</label>
+                <input type="text" id="filtroNumeroGuia" placeholder="Buscar por número de guía">
             </div>
-            <div class="date-filter">
-                <label for="fechaHasta">Hasta:</label>
-                <input type="date" id="fechaHasta">
+            
+            <div class="filter-group">
+                <label for="filtroEstado">Estado:</label>
+                <select id="filtroEstado">
+                    <option value="">Todos</option>
+                    <option value="vigente">Vigente</option>
+                    <option value="anulada">Anulada</option>
+                </select>
             </div>
+            
             <button class="btn" id="aplicarFiltro">Aplicar Filtro</button>
             <button class="btn btn-danger" id="limpiarFiltro">Limpiar Filtro</button>
         </div>
@@ -485,8 +529,8 @@
         const cancelDeleteBtn = document.getElementById('cancelDelete');
         const confirmDeleteBtn = document.getElementById('confirmDelete');
         const passwordError = document.getElementById('passwordError');
-        const fechaDesdeInput = document.getElementById('fechaDesde');
-        const fechaHastaInput = document.getElementById('fechaHasta');
+        const filtroNumeroGuia = document.getElementById('filtroNumeroGuia');
+        const filtroEstado = document.getElementById('filtroEstado');
         const aplicarFiltroBtn = document.getElementById('aplicarFiltro');
         const limpiarFiltroBtn = document.getElementById('limpiarFiltro');
         const totalGuiasSpan = document.getElementById('totalGuias');
@@ -497,6 +541,7 @@
         const destinatariosList = document.getElementById('destinatariosList');
         const transportistasList = document.getElementById('transportistasList');
         const scrollTopBtn = document.getElementById('scrollTopBtn');
+        const volverBtn = document.getElementById('volverBtn');
 
         // Contraseña para eliminar datos
         const DELETE_PASSWORD = "230304";
@@ -525,46 +570,6 @@
             
             // Si ya está en formato string pero no es ISO
             return fecha;
-        }
-
-        // Convertir string a fecha (solo fecha, sin hora)
-        function parseFechaToDate(fechaStr) {
-            if (!fechaStr || fechaStr === '-') return null;
-            
-            // Si ya es un objeto Date
-            if (fechaStr instanceof Date) {
-                return new Date(fechaStr.getFullYear(), fechaStr.getMonth(), fechaStr.getDate());
-            }
-            
-            // Intentar parsear diferentes formatos
-            try {
-                // Formato dd/mm/yyyy
-                if (fechaStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                    const [day, month, year] = fechaStr.split('/');
-                    return new Date(year, month - 1, day);
-                }
-                
-                // Formato yyyy-mm-dd (input date)
-                if (fechaStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                    return new Date(fechaStr);
-                }
-                
-                // Formato ISO
-                if (fechaStr.includes('T')) {
-                    const dateObj = new Date(fechaStr);
-                    return new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
-                }
-                
-                // Si es un número (serial de Excel)
-                if (typeof fechaStr === 'number') {
-                    const dateObj = new Date((fechaStr - (25567 + 2)) * 86400 * 1000);
-                    return new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
-                }
-            } catch {
-                return null;
-            }
-            
-            return null;
         }
 
         // Contar sellos (cada número cuenta como 1)
@@ -655,27 +660,21 @@
             transportistasList.innerHTML = html;
         }
 
-        // Filtrar datos por fecha de emisión
-        function filterByDate() {
-            const fechaDesde = parseFechaToDate(fechaDesdeInput.value);
-            const fechaHasta = parseFechaToDate(fechaHastaInput.value);
-            
-            if (!fechaDesde && !fechaHasta) {
-                filteredData = [...guiasData];
-                updateTable();
-                updateSummary(filteredData);
-                return;
-            }
+        // Filtrar datos por Nro Guía y Estado
+        function filterData() {
+            const numeroGuiaFilter = filtroNumeroGuia.value.toLowerCase();
+            const estadoFilter = filtroEstado.value.toLowerCase();
             
             filteredData = guiasData.filter(guia => {
-                const fechaGuia = parseFechaToDate(guia.fechaEmision);
-                if (!fechaGuia) return false;
+                // Filtrar por número de guía (si hay texto)
+                const matchesNumero = numeroGuiaFilter === '' || 
+                    (guia.numeroGuia && guia.numeroGuia.toString().toLowerCase().includes(numeroGuiaFilter));
                 
-                // Verificar si está en el rango
-                const afterDesde = !fechaDesde || fechaGuia >= fechaDesde;
-                const beforeHasta = !fechaHasta || fechaGuia <= fechaHasta;
+                // Filtrar por estado (si se seleccionó uno)
+                const matchesEstado = estadoFilter === '' || 
+                    (guia.estado && guia.estado.toLowerCase().includes(estadoFilter));
                 
-                return afterDesde && beforeHasta;
+                return matchesNumero && matchesEstado;
             });
             
             updateTable();
@@ -736,8 +735,8 @@
                 updateFechaCierre();
                 
                 // Limpiar filtros
-                fechaDesdeInput.value = '';
-                fechaHastaInput.value = '';
+                filtroNumeroGuia.value = '';
+                filtroEstado.value = '';
             };
             reader.readAsArrayBuffer(file);
         });
@@ -773,8 +772,8 @@
                 fechaCierreSpan.textContent = new Date().toLocaleDateString('es-ES');
                 
                 // Limpiar filtros
-                fechaDesdeInput.value = '';
-                fechaHastaInput.value = '';
+                filtroNumeroGuia.value = '';
+                filtroEstado.value = '';
                 
                 // Cerrar modal
                 passwordModal.style.display = 'none';
@@ -784,13 +783,13 @@
             }
         });
 
-        // Aplicar filtro por fecha
-        aplicarFiltroBtn.addEventListener('click', filterByDate);
+        // Aplicar filtro
+        aplicarFiltroBtn.addEventListener('click', filterData);
 
         // Limpiar filtro
         limpiarFiltroBtn.addEventListener('click', function() {
-            fechaDesdeInput.value = '';
-            fechaHastaInput.value = '';
+            filtroNumeroGuia.value = '';
+            filtroEstado.value = '';
             filteredData = [...guiasData];
             updateTable();
             updateSummary(filteredData);
@@ -841,7 +840,7 @@
                 // Usar la fecha más reciente
                 const ultimaFecha = guiasData.reduce((latest, current) => {
                     try {
-                        const currentDate = parseFechaToDate(current.fechaEmision);
+                        const currentDate = new Date(current.fechaEmision);
                         return currentDate > latest ? currentDate : latest;
                     } catch {
                         return latest;
@@ -911,6 +910,12 @@
             XLSX.writeFile(wb, `Guias_Despacho_${fechaExportacion}.xlsx`);
         });
 
+        // Botón Volver
+        volverBtn.addEventListener('click', function() {
+            // Aquí puedes cambiar la URL o redirigir a donde corresponda
+            window.location.href = 'index.html'; // Cambia esto por la URL correcta
+        });
+
         // Cargar datos al iniciar
         document.addEventListener('DOMContentLoaded', function() {
             const savedData = localStorage.getItem('guiasDespachoData');
@@ -921,11 +926,6 @@
                 updateSummary(filteredData);
                 updateFechaCierre();
             }
-            
-            // Establecer fecha máxima como hoy
-            const today = new Date().toISOString().split('T')[0];
-            fechaDesdeInput.max = today;
-            fechaHastaInput.max = today;
         });
     </script>
 </body>
