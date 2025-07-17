@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVC-CONTOPSA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #5c6bc0;
+            --secondary-color: #3949ab;
+            --accent-color: #7986cb;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--box-shadow);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            text-align: center;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(92, 107, 192, 0.1);
+            border-radius: 50%;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            color: var(--secondary-color);
+        }
+
+        .card-description {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background-color: var(--accent-color);
+        }
+
+        .btn-success:hover {
+            background-color: var(--secondary-color);
+        }
+
+        footer {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-top: 2rem;
+            width: 100%;
+            font-size: 0.85rem;
+        }
+
+        .footer-text {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            header {
+                padding: 1.25rem;
+            }
+            
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                max-width: 400px;
+            }
+            
+            .card {
+                padding: 1.25rem;
+            }
+            
+            .card-icon {
+                font-size: 1.75rem;
+                width: 50px;
+                height: 50px;
+                margin-bottom: 0.75rem;
+            }
+            
+            .card-title {
+                font-size: 1.1rem;
+            }
+            
+            .card-description {
+                font-size: 0.85rem;
+                margin-bottom: 1.25rem;
+            }
+            
+            .btn {
+                padding: 0.6rem 1.25rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .dashboard {
+                max-width: 100%;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Gestión de Transporte y Logística</h1>
+            <p class="subtitle"></p>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-truck-loading"></i>
+                </div>
+                <h2 class="card-title">Guías de Despacho</h2>
+                <p class="card-description">
+                    Gestión completa de guías de despacho, con registro, seguimiento y análisis de datos.
+                </p>
+                <a href="guias-despacho.html" class="btn">
+                    <i class="fas fa-arrow-right"></i> Acceder
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-weight-hanging"></i>
+                </div>
+                <h2 class="card-title">Registro de Pesaje</h2>
+                <p class="card-description">
+                    Sistema de registro y control de pesajes, con estadísticas y filtros avanzados.
+                </p>
+                <a href="registro-pesaje.html" class="btn">
+                    <i class="fas fa-arrow-right"></i> Acceder
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p class="footer-text">© 2025 OPSA - Todos los derechos reservados</p>
+    </footer>
+</body>
+</html>
