@@ -420,7 +420,7 @@
         
         // Formatear fecha para visualización
         function formatFecha(fecha) {
-            if (!fecha) return '-';
+            if (!fecha) return '';
             
             if (fecha instanceof Date) {
                 return `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth()+1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
@@ -480,21 +480,21 @@
             guiasData.forEach(guia => {
                 tableHTML += `
                     <tr>
-                        <td>${guia.numeroGuia}</td>
+                        <td>${guia.numeroGuia || ''}</td>
                         <td>${formatFecha(guia.fechaEmision)}</td>
-                        <td>${guia.tipo}</td>
-                        <td>${guia.estado}</td>
-                        <td>${guia.operador}</td>
-                        <td>${guia.destinatario}</td>
-                        <td>${guia.transportista}</td>
-                        <td>${guia.conductor}</td>
-                        <td>${guia.patenteCamion}</td>
-                        <td>${guia.patenteAcoplado}</td>
-                        <td>${guia.producto}</td>
-                        <td>${guia.pesoBruto}</td>
-                        <td>${guia.pesoTara}</td>
-                        <td>${guia.pesoNeto}</td>
-                        <td>${guia.sellos}</td>
+                        <td>${guia.tipo || ''}</td>
+                        <td>${guia.estado || ''}</td>
+                        <td>${guia.operador || ''}</td>
+                        <td>${guia.destinatario || ''}</td>
+                        <td>${guia.transportista || ''}</td>
+                        <td>${guia.conductor || ''}</td>
+                        <td>${guia.patenteCamion || ''}</td>
+                        <td>${guia.patenteAcoplado || ''}</td>
+                        <td>${guia.producto || ''}</td>
+                        <td>${guia.pesoBruto || ''}</td>
+                        <td>${guia.pesoTara || ''}</td>
+                        <td>${guia.pesoNeto || ''}</td>
+                        <td>${guia.sellos || ''}</td>
                     </tr>
                 `;
             });
@@ -532,21 +532,21 @@
                     
                     const nuevosDatos = jsonData.map(item => ({
                         id: Date.now() + Math.random().toString(36).substr(2, 9),
-                        numeroGuia: item['Nro Guía'] || item['Nro Guia'] || item['NroGuía'] || item['NroGuia'] || '-',
-                        fechaEmision: item['Fecha Emisión'] || item['FechaEmisión'] || item['Fecha'] || '-',
-                        tipo: item['Tipo'] || '-',
-                        estado: item['Estado'] || '-',
-                        operador: item['Operador'] || '-',
-                        destinatario: item['Destinatario'] || '-',
-                        transportista: item['Transportista'] || '-',
-                        conductor: item['Conductor'] || item['Chofer'] || '-',
-                        patenteCamion: item['Pat. Camión'] || item['PatCamión'] || item['Patente'] || '-',
-                        patenteAcoplado: item['Pat. Acoplado'] || item['PatAcoplado'] || '-',
-                        producto: item['Producto'] || '-',
-                        pesoBruto: item['Peso Bruto'] || item['PesoBruto'] || '-',
-                        pesoTara: item['Peso Tara'] || item['PesoTara'] || '-',
-                        pesoNeto: item['Peso Neto'] || item['PesoNeto'] || '-',
-                        sellos: item['Sellos'] || '-'
+                        numeroGuia: item['Nro Guía'] || item['Nro Guia'] || item['NroGuía'] || item['NroGuia'] || '',
+                        fechaEmision: item['Fecha Emisión'] || item['FechaEmisión'] || item['Fecha'] || '',
+                        tipo: item['Tipo'] || '',
+                        estado: item['Estado'] || '',
+                        operador: item['Operador'] || '',
+                        destinatario: item['Destinatario'] || '',
+                        transportista: item['Transportista'] || '',
+                        conductor: item['Conductor'] || item['Chofer'] || '',
+                        patenteCamion: item['Pat. Camión'] || item['PatCamión'] || item['Patente'] || '',
+                        patenteAcoplado: item['Pat. Acoplado'] || item['PatAcoplado'] || '',
+                        producto: item['Producto'] || '',
+                        pesoBruto: item['Peso Bruto'] || item['PesoBruto'] || '',
+                        pesoTara: item['Peso Tara'] || item['PesoTara'] || '',
+                        pesoNeto: item['Peso Neto'] || item['PesoNeto'] || '',
+                        sellos: item['Sellos'] || ''
                     }));
                     
                     guiasData = [...guiasData, ...nuevosDatos];
@@ -587,7 +587,7 @@
             });
         });
         
-        // Guardar datos en Supabase
+        // Guardar datos en Supabase (versión corregida)
         async function saveDataToSupabase() {
             if (guiasData.length === 0) {
                 showStatus('warning', 'No hay datos para guardar.');
@@ -600,51 +600,28 @@
             
             try {
                 let successCount = 0;
-                let duplicateCount = 0;
                 let errorCount = 0;
                 
                 // Procesar cada guía individualmente
                 for (const guia of guiasData) {
                     try {
-                        // Verificar si la guía ya existe en Supabase
-                        const existsResponse = await fetch(
-                            `${SUPABASE_URL}/rest/v1/guias_despacho?numero_guia=eq.${encodeURIComponent(guia.numeroGuia)}&select=numero_guia`,
-                            {
-                                headers: {
-                                    'apikey': SUPABASE_KEY,
-                                    'Authorization': `Bearer ${SUPABASE_KEY}`
-                                }
-                            }
-                        );
-                        
-                        if (!existsResponse.ok) {
-                            throw new Error(`Error al verificar guía: ${existsResponse.status}`);
-                        }
-                        
-                        const existingData = await existsResponse.json();
-                        
-                        if (existingData.length > 0) {
-                            duplicateCount++;
-                            continue;
-                        }
-                        
-                        // Preparar datos para Supabase (todos como texto)
+                        // Preparar datos para Supabase (convertir a string solo si existe el valor)
                         const guiaData = {
-                            numero_guia: String(guia.numeroGuia),
-                            fecha_emision: String(guia.fechaEmision),
-                            tipo: String(guia.tipo),
-                            estado: String(guia.estado),
-                            operador: String(guia.operador),
-                            destinatario: String(guia.destinatario),
-                            transportista: String(guia.transportista),
-                            conductor: String(guia.conductor),
-                            patente_camion: String(guia.patenteCamion),
-                            patente_acoplado: String(guia.patenteAcoplado),
-                            producto: String(guia.producto),
-                            peso_bruto: String(guia.pesoBruto),
-                            peso_tara: String(guia.pesoTara),
-                            peso_neto: String(guia.pesoNeto),
-                            sellos: String(guia.sellos)
+                            numero_guia: guia.numeroGuia !== undefined && guia.numeroGuia !== '' ? String(guia.numeroGuia) : null,
+                            fecha_emision: guia.fechaEmision !== undefined && guia.fechaEmision !== '' ? String(guia.fechaEmision) : null,
+                            tipo: guia.tipo !== undefined && guia.tipo !== '' ? String(guia.tipo) : null,
+                            estado: guia.estado !== undefined && guia.estado !== '' ? String(guia.estado) : null,
+                            operador: guia.operador !== undefined && guia.operador !== '' ? String(guia.operador) : null,
+                            destinatario: guia.destinatario !== undefined && guia.destinatario !== '' ? String(guia.destinatario) : null,
+                            transportista: guia.transportista !== undefined && guia.transportista !== '' ? String(guia.transportista) : null,
+                            conductor: guia.conductor !== undefined && guia.conductor !== '' ? String(guia.conductor) : null,
+                            patente_camion: guia.patenteCamion !== undefined && guia.patenteCamion !== '' ? String(guia.patenteCamion) : null,
+                            patente_acoplado: guia.patenteAcoplado !== undefined && guia.patenteAcoplado !== '' ? String(guia.patenteAcoplado) : null,
+                            producto: guia.producto !== undefined && guia.producto !== '' ? String(guia.producto) : null,
+                            peso_bruto: guia.pesoBruto !== undefined && guia.pesoBruto !== '' ? String(guia.pesoBruto) : null,
+                            peso_tara: guia.pesoTara !== undefined && guia.pesoTara !== '' ? String(guia.pesoTara) : null,
+                            peso_neto: guia.pesoNeto !== undefined && guia.pesoNeto !== '' ? String(guia.pesoNeto) : null,
+                            sellos: guia.sellos !== undefined && guia.sellos !== '' ? String(guia.sellos) : null
                         };
                         
                         // Insertar en Supabase
@@ -660,17 +637,18 @@
                         });
                         
                         if (!insertResponse.ok) {
-                            throw new Error(`Error ${insertResponse.status}: ${insertResponse.statusText}`);
+                            const errorData = await insertResponse.json();
+                            throw new Error(`Error ${insertResponse.status}: ${errorData.message || insertResponse.statusText}`);
                         }
                         
                         successCount++;
                         
                         // Actualizar estado cada 10 registros
                         if (successCount % 10 === 0) {
-                            showStatus('success', `Guardando datos... ${successCount} guías guardadas, ${duplicateCount} duplicadas.`);
+                            showStatus('success', `Guardando datos... ${successCount} guías guardadas.`);
                         }
                     } catch (error) {
-                        console.error(`Error al guardar guía ${guia.numeroGuia}:`, error);
+                        console.error(`Error al guardar guía ${guia.numeroGuia || '(sin número)'}:`, error);
                         errorCount++;
                     }
                 }
@@ -678,7 +656,6 @@
                 // Mostrar resumen final
                 let message = `Proceso completado. `;
                 message += `Guías guardadas: ${successCount}. `;
-                message += `Guías duplicadas (no guardadas): ${duplicateCount}. `;
                 
                 if (errorCount > 0) {
                     message += `Errores: ${errorCount}.`;
