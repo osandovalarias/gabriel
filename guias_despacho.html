@@ -449,7 +449,7 @@
         function updateSummary() {
             const total = guiasData.length;
             const vigentes = guiasData.filter(g => g.estado && g.estado.toLowerCase().includes('vigente')).length;
-            const anuladas = guiasData.filter(g => g.estado && g.estado.toLowerCase().includes('anulada')).length;
+            const anulado = guiasData.filter(g => g.estado && g.estado.toLowerCase().includes('anulado')).length;
             
             let totalPesoNeto = 0;
             
@@ -461,7 +461,7 @@
             
             totalGuiasSpan.textContent = total;
             guiasVigentesSpan.textContent = vigentes;
-            guiasAnuladasSpan.textContent = anuladas;
+            guiasAnuladasSpan.textContent = anulado;
             totalPesoNetoSpan.textContent = totalPesoNeto.toFixed(2);
         }
         
