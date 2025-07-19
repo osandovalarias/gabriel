@@ -409,16 +409,12 @@
                 <p id="totalRegistros">0</p>
             </div>
             <div class="summary-card">
-                <h3>Peso Bruto Total</h3>
-                <p id="totalPesoBruto">0</p>
+                <h3>Vigente</h3>
+                <p id="totalVigente">0</p>
             </div>
             <div class="summary-card">
-                <h3>Peso Neto Total</h3>
-                <p id="totalPesoNeto">0</p>
-            </div>
-            <div class="summary-card">
-                <h3>Última Fecha</h3>
-                <p id="ultimaFecha">-</p>
+                <h3>Anulado</h3>
+                <p id="totalAnulado">0</p>
             </div>
         </div>
 
@@ -493,9 +489,8 @@
         const statusMessage = document.getElementById('statusMessage');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const totalRegistrosSpan = document.getElementById('totalRegistros');
-        const totalPesoBrutoSpan = document.getElementById('totalPesoBruto');
-        const totalPesoNetoSpan = document.getElementById('totalPesoNeto');
-        const ultimaFechaSpan = document.getElementById('ultimaFecha');
+        const totalVigenteSpan = document.getElementById('totalVigente');
+        const totalAnuladoSpan = document.getElementById('totalAnulado');
         const backBtn = document.getElementById('backBtn');
         const addNewBtn = document.getElementById('addNewBtn');
         const refreshBtn = document.getElementById('refreshBtn');
@@ -507,34 +502,6 @@
         const clearSearchBtn = document.getElementById('clearSearchBtn');
         const transportistasList = document.getElementById('transportistasList');
         const destinosList = document.getElementById('destinosList');
-        
-        // Formatear fecha para visualización
-        function formatFecha(fecha) {
-            if (!fecha) return '-';
-            
-            try {
-                const dateObj = new Date(fecha);
-                if (isNaN(dateObj.getTime())) return fecha;
-                
-                return `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
-            } catch (e) {
-                return fecha;
-            }
-        }
-        
-        // Formatear fecha y hora para visualización
-        function formatFechaHora(fecha) {
-            if (!fecha) return '-';
-            
-            try {
-                const dateObj = new Date(fecha);
-                if (isNaN(dateObj.getTime())) return fecha;
-                
-                return `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${dateObj.getFullYear()} ${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
-            } catch (e) {
-                return fecha;
-            }
-        }
         
         // Mostrar mensaje de estado
         function showStatus(type, message) {
@@ -616,31 +583,20 @@
         function updateSummary(data) {
             const total = data.length;
             
-            let totalPesoBruto = 0;
-            let totalPesoNeto = 0;
-            let ultimaFecha = null;
+            let totalVigente = 0;
+            let totalAnulado = 0;
             
             data.forEach(guia => {
-                if (guia.peso_bruto && !isNaN(guia.peso_bruto)) {
-                    totalPesoBruto += Number(guia.peso_bruto);
-                }
-                
-                if (guia.peso_neto && !isNaN(guia.peso_neto)) {
-                    totalPesoNeto += Number(guia.peso_neto);
-                }
-                
-                if (guia.fecha_emision) {
-                    const fecha = new Date(guia.fecha_emision);
-                    if (!ultimaFecha || fecha > ultimaFecha) {
-                        ultimaFecha = fecha;
-                    }
+                if (guia.estado && guia.estado.toLowerCase() === 'vigente') {
+                    totalVigente++;
+                } else if (guia.estado && guia.estado.toLowerCase() === 'anulado') {
+                    totalAnulado++;
                 }
             });
             
             totalRegistrosSpan.textContent = total;
-            totalPesoBrutoSpan.textContent = totalPesoBruto.toFixed(2);
-            totalPesoNetoSpan.textContent = totalPesoNeto.toFixed(2);
-            ultimaFechaSpan.textContent = ultimaFecha ? formatFecha(ultimaFecha) : '-';
+            totalVigenteSpan.textContent = totalVigente;
+            totalAnuladoSpan.textContent = totalAnulado;
             
             // Calcular estadísticas
             calculateStats(data);
@@ -666,7 +622,7 @@
                 tableHTML += `
                     <tr>
                         <td>${guia.numero_guia || '-'}</td>
-                        <td>${formatFechaHora(guia.fecha_emision)}</td>
+                        <td>${guia.fecha_emision || '-'}</td>
                         <td>${guia.tipo || '-'}</td>
                         <td>${guia.estado || '-'}</td>
                         <td>${guia.operador || '-'}</td>
@@ -716,12 +672,6 @@
             for (const [key, value] of Object.entries(guia)) {
                 if (value !== null && value !== undefined && value !== '') {
                     let displayValue = value;
-                    
-                    // Formatear fechas
-                    if (key.includes('fecha') || key.includes('created_at')) {
-                        displayValue = formatFechaHora(value);
-                    }
-                    
                     modalContent += `
                         <div style="border-bottom: 1px solid #eee; padding-bottom: 5px;">
                             <strong>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong>
@@ -773,28 +723,55 @@
             if (filteredData.length === 0) {
                 showStatus('warning', 'No se encontraron registros que coincidan con la búsqueda.');
             } else {
-                showStatus('success', `Se encontraron ${filteredData.length} registros que coinciden con la búsqueda.`);
+                showStatus('success', `Se encontraron ${filteredData.length} registros que coincidan con la búsqueda.`);
             }
         }
         
-        // Cargar datos desde Supabase
+        // Función para obtener todos los registros con paginación
+        async function fetchAllRecords() {
+            const allRecords = [];
+            let offset = 0;
+            const limit = 1000; // Máximo permitido por Supabase
+            let hasMore = true;
+            
+            while (hasMore) {
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/guias_despacho?select=*&order=id.asc&offset=${offset}&limit=${limit}`, {
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    allRecords.push(...data);
+                    
+                    // Si recibimos menos registros que el límite, significa que no hay más
+                    if (data.length < limit) {
+                        hasMore = false;
+                    } else {
+                        offset += limit;
+                    }
+                } catch (error) {
+                    console.error('Error al obtener registros:', error);
+                    throw error;
+                }
+            }
+            
+            return allRecords;
+        }
+        
+        // Cargar datos desde Supabase con paginación para obtener todos
         async function loadDataFromSupabase() {
             loadingIndicator.style.display = 'block';
             showStatus('info', 'Cargando datos desde Supabase...');
             
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/guias_despacho?select=*`, {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
+                const data = await fetchAllRecords();
                 allGuiasData = data;
                 filteredData = [...allGuiasData];
                 
